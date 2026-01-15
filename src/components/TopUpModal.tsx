@@ -1,4 +1,4 @@
-﻿import { useState, useRef } from 'react'
+import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { balanceApi } from '../api/balance'
@@ -28,7 +28,7 @@ const openPaymentLink = (url: string, reservedWindow?: Window | null) => {
 
   // If inside Telegram Mini App, let Telegram handle t.me links
   if (isTelegramPaymentLink(url) && webApp?.openTelegramLink) {
-    try { webApp.openTelegramLink(url); return } catch {}
+    try { webApp.openTelegramLink(url); return } catch { /* ignore */ }
   }
 
   // Prefer Telegram deep link specifically for CryptoBot invoices, but only when
@@ -37,7 +37,7 @@ const openPaymentLink = (url: string, reservedWindow?: Window | null) => {
   const target = cb && !isTelegramPaymentLink(url) ? cb : url
 
   if (reservedWindow && !reservedWindow.closed) {
-    try { reservedWindow.location.href = target; reservedWindow.focus?.() } catch {}
+    try { reservedWindow.location.href = target; reservedWindow.focus?.() } catch { /* ignore */ }
     return
   }
 
@@ -131,7 +131,7 @@ export default function TopUpModal({ method, onClose }: TopUpModalProps) {
       onClose()
     },
     onError: (error: unknown) => {
-      try { if (popupRef.current && !popupRef.current.closed) popupRef.current.close() } catch {}
+      try { if (popupRef.current && !popupRef.current.closed) popupRef.current.close() } catch { /* ignore */ }
       popupRef.current = null
       const detail = (error as { response?: { data?: { detail?: string } } })?.response?.data?.detail || ''
       if (detail.includes('not yet implemented')) setError(t('balance.useBot'))
