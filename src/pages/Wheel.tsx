@@ -72,6 +72,30 @@ export default function Wheel() {
     enabled: showHistory,
   })
 
+  // Auto-select payment type based on availability
+  useEffect(() => {
+    if (!config) return
+
+    const starsEnabled = config.spin_cost_stars_enabled && config.spin_cost_stars
+    const daysEnabled = config.spin_cost_days_enabled && config.spin_cost_days
+    const canPayBalance = starsEnabled && config.can_pay_stars
+    const canPayDays = daysEnabled && config.can_pay_days
+
+    if (isTelegramMiniApp) {
+      // In Mini App: prefer days if available, Stars payment is separate button
+      if (canPayDays) {
+        setPaymentType('subscription_days')
+      }
+    } else {
+      // In Web: prefer balance (Stars converted to rubles), fallback to days
+      if (canPayBalance) {
+        setPaymentType('telegram_stars')
+      } else if (canPayDays) {
+        setPaymentType('subscription_days')
+      }
+    }
+  }, [config, isTelegramMiniApp])
+
   // Function to poll for new spin result after Stars payment
   const pollForSpinResult = useCallback(async (maxAttempts = 15, delayMs = 800) => {
     // Wait a bit before first poll to give the bot time to process the payment
@@ -367,23 +391,6 @@ export default function Wheel() {
   const daysEnabled = config.spin_cost_days_enabled && config.spin_cost_days
   const canPayBalance = starsEnabled && config.can_pay_stars // For web: pay with internal balance
   const canPayDays = daysEnabled && config.can_pay_days
-
-  // Auto-select payment type based on availability
-  useEffect(() => {
-    if (isTelegramMiniApp) {
-      // In Mini App: prefer days if available, Stars payment is separate button
-      if (canPayDays) {
-        setPaymentType('subscription_days')
-      }
-    } else {
-      // In Web: prefer balance (Stars converted to rubles), fallback to days
-      if (canPayBalance) {
-        setPaymentType('telegram_stars')
-      } else if (canPayDays) {
-        setPaymentType('subscription_days')
-      }
-    }
-  }, [canPayBalance, canPayDays, isTelegramMiniApp])
 
   return (
     <div className="animate-fade-in pb-8">
