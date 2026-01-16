@@ -75,6 +75,7 @@ function TariffModal({ tariff, servers, onSave, onClose, isLoading }: TariffModa
   const [trafficLimitGb, setTrafficLimitGb] = useState(tariff?.traffic_limit_gb || 0)
   const [deviceLimit, setDeviceLimit] = useState(tariff?.device_limit || 1)
   const [devicePriceKopeks, setDevicePriceKopeks] = useState(tariff?.device_price_kopeks || 0)
+  const [maxDeviceLimit, setMaxDeviceLimit] = useState(tariff?.max_device_limit || 0)
   const [tierLevel, setTierLevel] = useState(tariff?.tier_level || 1)
   const [periodPrices, setPeriodPrices] = useState<PeriodPrice[]>(
     tariff?.period_prices || DEFAULT_PERIODS.map(d => ({ days: d, price_kopeks: 0 }))
@@ -119,6 +120,7 @@ function TariffModal({ tariff, servers, onSave, onClose, isLoading }: TariffModa
       traffic_limit_gb: trafficLimitGb,
       device_limit: deviceLimit,
       device_price_kopeks: devicePriceKopeks > 0 ? devicePriceKopeks : undefined,
+      max_device_limit: maxDeviceLimit > 0 ? maxDeviceLimit : undefined,
       tier_level: tierLevel,
       period_prices: periodPrices.filter(p => p.price_kopeks > 0),
       allowed_squads: selectedSquads,
@@ -442,19 +444,32 @@ function TariffModal({ tariff, servers, onSave, onClose, isLoading }: TariffModa
               {/* Цена за доп. устройство */}
               <div className="p-4 bg-dark-700/50 rounded-lg">
                 <h4 className="text-sm font-medium text-dark-200 mb-3">Докупка устройств</h4>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm text-dark-400">Цена за устройство (30 дней):</span>
-                  <input
-                    type="number"
-                    value={devicePriceKopeks / 100}
-                    onChange={e => setDevicePriceKopeks(Math.max(0, parseFloat(e.target.value) || 0) * 100)}
-                    className="w-24 px-3 py-2 bg-dark-600 border border-dark-500 rounded-lg text-dark-100 focus:outline-none focus:border-accent-500"
-                    min={0}
-                    step={1}
-                  />
-                  <span className="text-dark-400">₽</span>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-dark-400 w-48">Цена за устройство (30 дней):</span>
+                    <input
+                      type="number"
+                      value={devicePriceKopeks / 100}
+                      onChange={e => setDevicePriceKopeks(Math.max(0, parseFloat(e.target.value) || 0) * 100)}
+                      className="w-24 px-3 py-2 bg-dark-600 border border-dark-500 rounded-lg text-dark-100 focus:outline-none focus:border-accent-500"
+                      min={0}
+                      step={1}
+                    />
+                    <span className="text-dark-400">₽</span>
+                  </div>
+                  <p className="text-xs text-dark-500">0 = докупка недоступна</p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-dark-400 w-48">Макс. устройств на тарифе:</span>
+                    <input
+                      type="number"
+                      value={maxDeviceLimit}
+                      onChange={e => setMaxDeviceLimit(Math.max(0, parseInt(e.target.value) || 0))}
+                      className="w-24 px-3 py-2 bg-dark-600 border border-dark-500 rounded-lg text-dark-100 focus:outline-none focus:border-accent-500"
+                      min={0}
+                    />
+                  </div>
+                  <p className="text-xs text-dark-500">0 = без ограничений</p>
                 </div>
-                <p className="text-xs text-dark-500 mt-1">0 = докупка недоступна</p>
               </div>
 
               {/* Произвольное количество дней */}
