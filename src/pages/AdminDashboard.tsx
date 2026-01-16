@@ -497,6 +497,58 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Tariff Stats */}
+      {stats?.tariff_stats && stats.tariff_stats.tariffs.length > 0 && (
+        <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-5">
+          <div className="flex items-center gap-3 mb-4">
+            <SubscriptionIcon />
+            <div>
+              <h2 className="text-lg font-semibold text-dark-100">{t('adminDashboard.tariffs.title')}</h2>
+              <p className="text-sm text-dark-400">{t('adminDashboard.tariffs.subtitle')}</p>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-dark-700">
+                  <th className="text-left text-xs text-dark-500 font-medium py-3 px-2">{t('adminDashboard.tariffs.tariffName')}</th>
+                  <th className="text-center text-xs text-dark-500 font-medium py-3 px-2">{t('adminDashboard.tariffs.activeSubscriptions')}</th>
+                  <th className="text-center text-xs text-dark-500 font-medium py-3 px-2">{t('adminDashboard.tariffs.trialSubscriptions')}</th>
+                  <th className="text-center text-xs text-dark-500 font-medium py-3 px-2">{t('adminDashboard.tariffs.purchasedToday')}</th>
+                  <th className="text-center text-xs text-dark-500 font-medium py-3 px-2">{t('adminDashboard.tariffs.purchasedWeek')}</th>
+                  <th className="text-center text-xs text-dark-500 font-medium py-3 px-2">{t('adminDashboard.tariffs.purchasedMonth')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.tariff_stats.tariffs.map((tariff) => (
+                  <tr key={tariff.tariff_id} className="border-b border-dark-700/50 hover:bg-dark-800/50 transition-colors">
+                    <td className="py-3 px-2">
+                      <span className="font-medium text-dark-100">{tariff.tariff_name}</span>
+                    </td>
+                    <td className="text-center py-3 px-2">
+                      <span className="text-success-400 font-semibold">{tariff.active_subscriptions}</span>
+                    </td>
+                    <td className="text-center py-3 px-2">
+                      <span className="text-warning-400 font-semibold">{tariff.trial_subscriptions}</span>
+                    </td>
+                    <td className="text-center py-3 px-2">
+                      <span className="text-dark-200">{tariff.purchased_today}</span>
+                    </td>
+                    <td className="text-center py-3 px-2">
+                      <span className="text-dark-200">{tariff.purchased_week}</span>
+                    </td>
+                    <td className="text-center py-3 px-2">
+                      <span className="text-dark-200">{tariff.purchased_month}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
