@@ -10,6 +10,11 @@ import {
   type BanNodesListResponse,
   type BanAgentsListResponse,
   type BanTrafficViolationsResponse,
+  type BanSettingsResponse,
+  type BanSettingDefinition,
+  type BanTrafficResponse,
+  type BanReportResponse,
+  type BanHealthResponse,
 } from '../api/banSystem'
 
 // Icons
@@ -67,7 +72,32 @@ const SearchIcon = () => (
   </svg>
 )
 
-type TabType = 'dashboard' | 'users' | 'punishments' | 'nodes' | 'agents' | 'violations'
+const SettingsIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+  </svg>
+)
+
+const TrafficIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+  </svg>
+)
+
+const ReportIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+  </svg>
+)
+
+const HealthIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+  </svg>
+)
+
+type TabType = 'dashboard' | 'users' | 'punishments' | 'nodes' | 'agents' | 'violations' | 'settings' | 'traffic' | 'reports' | 'health'
 
 interface StatCardProps {
   title: string
@@ -111,6 +141,12 @@ export default function AdminBanSystem() {
   const [nodes, setNodes] = useState<BanNodesListResponse | null>(null)
   const [agents, setAgents] = useState<BanAgentsListResponse | null>(null)
   const [violations, setViolations] = useState<BanTrafficViolationsResponse | null>(null)
+  const [settings, setSettings] = useState<BanSettingsResponse | null>(null)
+  const [traffic, setTraffic] = useState<BanTrafficResponse | null>(null)
+  const [report, setReport] = useState<BanReportResponse | null>(null)
+  const [health, setHealth] = useState<BanHealthResponse | null>(null)
+  const [reportHours, setReportHours] = useState(24)
+  const [settingLoading, setSettingLoading] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -171,6 +207,22 @@ export default function AdminBanSystem() {
           const violationsData = await banSystemApi.getTrafficViolations()
           setViolations(violationsData)
           break
+        case 'settings':
+          const settingsData = await banSystemApi.getSettings()
+          setSettings(settingsData)
+          break
+        case 'traffic':
+          const trafficData = await banSystemApi.getTraffic()
+          setTraffic(trafficData)
+          break
+        case 'reports':
+          const reportData = await banSystemApi.getReport(reportHours)
+          setReport(reportData)
+          break
+        case 'health':
+          const healthData = await banSystemApi.getHealth()
+          setHealth(healthData)
+          break
       }
     } catch {
       setError(t('banSystem.loadError'))
@@ -219,6 +271,48 @@ export default function AdminBanSystem() {
     }
   }
 
+  const handleToggleSetting = async (key: string) => {
+    try {
+      setSettingLoading(key)
+      await banSystemApi.toggleSetting(key)
+      loadTabData('settings')
+    } catch {
+      setError(t('banSystem.loadError'))
+    } finally {
+      setSettingLoading(null)
+    }
+  }
+
+  const handleSetSetting = async (key: string, value: string) => {
+    try {
+      setSettingLoading(key)
+      await banSystemApi.setSetting(key, value)
+      loadTabData('settings')
+    } catch {
+      setError(t('banSystem.loadError'))
+    } finally {
+      setSettingLoading(null)
+    }
+  }
+
+  const handleReportPeriodChange = (hours: number) => {
+    setReportHours(hours)
+  }
+
+  useEffect(() => {
+    if (activeTab === 'reports' && status?.enabled) {
+      loadTabData('reports')
+    }
+  }, [reportHours])
+
+  const formatBytes = (bytes: number) => {
+    if (bytes === 0) return '0 B'
+    const k = 1024
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`
+  }
+
   const formatUptime = (seconds: number | null) => {
     if (!seconds) return '-'
     const hours = Math.floor(seconds / 3600)
@@ -242,6 +336,10 @@ export default function AdminBanSystem() {
     { id: 'nodes' as TabType, label: t('banSystem.tabs.nodes'), icon: <ServerIcon /> },
     { id: 'agents' as TabType, label: t('banSystem.tabs.agents'), icon: <AgentIcon /> },
     { id: 'violations' as TabType, label: t('banSystem.tabs.violations'), icon: <WarningIcon /> },
+    { id: 'traffic' as TabType, label: t('banSystem.tabs.traffic'), icon: <TrafficIcon /> },
+    { id: 'reports' as TabType, label: t('banSystem.tabs.reports'), icon: <ReportIcon /> },
+    { id: 'settings' as TabType, label: t('banSystem.tabs.settings'), icon: <SettingsIcon /> },
+    { id: 'health' as TabType, label: t('banSystem.tabs.health'), icon: <HealthIcon /> },
   ]
 
   if (loading && !status) {
@@ -645,6 +743,296 @@ export default function AdminBanSystem() {
               </table>
               {(!violations?.violations || violations.violations.length === 0) && (
                 <div className="text-center py-8 text-dark-500">{t('banSystem.violations.noViolations')}</div>
+              )}
+            </div>
+          )}
+
+          {/* Traffic Tab */}
+          {activeTab === 'traffic' && traffic && (
+            <div className="space-y-4">
+              {/* Traffic Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <StatCard
+                  title={t('banSystem.traffic.enabled')}
+                  value={traffic.enabled ? t('common.yes') : t('common.no')}
+                  icon={<TrafficIcon />}
+                  color={traffic.enabled ? 'success' : 'warning'}
+                />
+              </div>
+
+              {/* Top Users by Traffic */}
+              {traffic.top_users && traffic.top_users.length > 0 && (
+                <div className="bg-dark-800/50 rounded-xl border border-dark-700 overflow-hidden">
+                  <div className="p-4 border-b border-dark-700">
+                    <h3 className="text-sm font-medium text-dark-200">{t('banSystem.traffic.topUsers')}</h3>
+                  </div>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-dark-700">
+                        <th className="text-left text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.traffic.username')}</th>
+                        <th className="text-center text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.traffic.bytesTotal')}</th>
+                        <th className="text-center text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.traffic.bytesLimit')}</th>
+                        <th className="text-center text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.traffic.status')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {traffic.top_users.map((user, idx) => (
+                        <tr key={idx} className="border-b border-dark-700/50 hover:bg-dark-800/50">
+                          <td className="py-3 px-4 text-dark-100">{user.username}</td>
+                          <td className="text-center py-3 px-4 text-dark-300">{formatBytes(user.bytes_total)}</td>
+                          <td className="text-center py-3 px-4 text-dark-300">{user.bytes_limit ? formatBytes(user.bytes_limit) : '-'}</td>
+                          <td className="text-center py-3 px-4">
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              user.over_limit
+                                ? 'bg-error-500/20 text-error-400'
+                                : 'bg-success-500/20 text-success-400'
+                            }`}>
+                              {user.over_limit ? t('banSystem.traffic.overLimit') : t('banSystem.traffic.ok')}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Recent Violations */}
+              {traffic.recent_violations && traffic.recent_violations.length > 0 && (
+                <div className="bg-dark-800/50 rounded-xl border border-dark-700 overflow-hidden">
+                  <div className="p-4 border-b border-dark-700">
+                    <h3 className="text-sm font-medium text-dark-200">{t('banSystem.traffic.recentViolations')}</h3>
+                  </div>
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-dark-700">
+                        <th className="text-left text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.violations.user')}</th>
+                        <th className="text-left text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.violations.type')}</th>
+                        <th className="text-center text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.violations.detectedAt')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {traffic.recent_violations.map((v, idx) => (
+                        <tr key={idx} className="border-b border-dark-700/50 hover:bg-dark-800/50">
+                          <td className="py-3 px-4 text-dark-100">{v.username}</td>
+                          <td className="py-3 px-4 text-warning-400">{v.violation_type}</td>
+                          <td className="text-center py-3 px-4 text-dark-300 text-sm">{formatDate(v.detected_at)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {(!traffic.top_users || traffic.top_users.length === 0) && (!traffic.recent_violations || traffic.recent_violations.length === 0) && (
+                <div className="text-center py-8 text-dark-500">{t('common.noData')}</div>
+              )}
+            </div>
+          )}
+
+          {/* Reports Tab */}
+          {activeTab === 'reports' && (
+            <div className="space-y-4">
+              {/* Period Selector */}
+              <div className="flex items-center gap-4">
+                <span className="text-dark-400">{t('banSystem.reports.period')}:</span>
+                <div className="flex gap-2">
+                  {[6, 12, 24, 48, 72].map((hours) => (
+                    <button
+                      key={hours}
+                      onClick={() => handleReportPeriodChange(hours)}
+                      className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
+                        reportHours === hours
+                          ? 'bg-accent-500/20 text-accent-400'
+                          : 'bg-dark-800 text-dark-400 hover:text-dark-200'
+                      }`}
+                    >
+                      {hours}h
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {report && (
+                <>
+                  {/* Report Stats */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <StatCard
+                      title={t('banSystem.reports.currentUsers')}
+                      value={report.current_users}
+                      icon={<UsersIcon />}
+                      color="accent"
+                    />
+                    <StatCard
+                      title={t('banSystem.reports.currentIps')}
+                      value={report.current_ips}
+                      icon={<ServerIcon />}
+                      color="info"
+                    />
+                  </div>
+
+                  {/* Top Violators */}
+                  {report.top_violators && report.top_violators.length > 0 && (
+                    <div className="bg-dark-800/50 rounded-xl border border-dark-700 overflow-hidden">
+                      <div className="p-4 border-b border-dark-700">
+                        <h3 className="text-sm font-medium text-dark-200">{t('banSystem.reports.topViolators')}</h3>
+                      </div>
+                      <table className="w-full">
+                        <thead>
+                          <tr className="border-b border-dark-700">
+                            <th className="text-left text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.reports.username')}</th>
+                            <th className="text-center text-xs text-dark-500 font-medium py-3 px-4">{t('banSystem.reports.count')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {report.top_violators.map((v, idx) => (
+                            <tr key={idx} className="border-b border-dark-700/50 hover:bg-dark-800/50">
+                              <td className="py-3 px-4 text-dark-100">{v.username}</td>
+                              <td className="text-center py-3 px-4 text-warning-400">{v.count}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Settings Tab */}
+          {activeTab === 'settings' && settings && (
+            <div className="space-y-4">
+              {/* Group settings by category */}
+              {(() => {
+                const grouped: Record<string, BanSettingDefinition[]> = {}
+                settings.settings.forEach((s) => {
+                  const cat = s.category || 'general'
+                  if (!grouped[cat]) grouped[cat] = []
+                  grouped[cat].push(s)
+                })
+
+                return Object.entries(grouped).map(([category, items]) => (
+                  <div key={category} className="bg-dark-800/50 rounded-xl border border-dark-700 overflow-hidden">
+                    <div className="p-4 border-b border-dark-700">
+                      <h3 className="text-sm font-medium text-dark-200 capitalize">{category}</h3>
+                    </div>
+                    <div className="divide-y divide-dark-700">
+                      {items.map((setting) => (
+                        <div key={setting.key} className="p-4 flex items-center justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-dark-100 font-medium">{setting.key}</div>
+                            {setting.description && (
+                              <div className="text-xs text-dark-500 mt-0.5">{setting.description}</div>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            {setting.type === 'bool' ? (
+                              <button
+                                onClick={() => handleToggleSetting(setting.key)}
+                                disabled={!setting.editable || settingLoading === setting.key}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                                  setting.value ? 'bg-accent-500' : 'bg-dark-600'
+                                } ${!setting.editable ? 'opacity-50 cursor-not-allowed' : ''}`}
+                              >
+                                <span
+                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    setting.value ? 'translate-x-6' : 'translate-x-1'
+                                  }`}
+                                />
+                              </button>
+                            ) : setting.type === 'int' ? (
+                              <input
+                                type="number"
+                                value={String(setting.value)}
+                                onChange={(e) => handleSetSetting(setting.key, e.target.value)}
+                                min={setting.min_value ?? undefined}
+                                max={setting.max_value ?? undefined}
+                                disabled={!setting.editable || settingLoading === setting.key}
+                                className="w-24 px-3 py-1.5 bg-dark-900 border border-dark-700 rounded-lg text-dark-100 text-sm focus:outline-none focus:border-accent-500 disabled:opacity-50"
+                              />
+                            ) : setting.type === 'list' ? (
+                              <div className="text-dark-300 text-sm">
+                                {Array.isArray(setting.value) ? setting.value.join(', ') : String(setting.value)}
+                              </div>
+                            ) : (
+                              <div className="text-dark-300 text-sm">{String(setting.value)}</div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              })()}
+            </div>
+          )}
+
+          {/* Health Tab */}
+          {activeTab === 'health' && health && (
+            <div className="space-y-4">
+              {/* Overall Status */}
+              <div className="bg-dark-800/50 rounded-xl border border-dark-700 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-4 h-4 rounded-full ${
+                      health.status === 'healthy' ? 'bg-success-500 animate-pulse' :
+                      health.status === 'degraded' ? 'bg-warning-500 animate-pulse' :
+                      'bg-error-500 animate-pulse'
+                    }`} />
+                    <div>
+                      <div className="text-dark-100 font-medium">{t('banSystem.health.systemStatus')}</div>
+                      <div className={`text-sm ${
+                        health.status === 'healthy' ? 'text-success-400' :
+                        health.status === 'degraded' ? 'text-warning-400' :
+                        'text-error-400'
+                      }`}>
+                        {health.status.toUpperCase()}
+                      </div>
+                    </div>
+                  </div>
+                  {health.uptime !== null && (
+                    <div className="text-right">
+                      <div className="text-xs text-dark-500">{t('banSystem.stats.uptime')}</div>
+                      <div className="text-dark-100">{formatUptime(health.uptime)}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Components Status */}
+              {health.components && health.components.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {health.components.map((comp, idx) => (
+                    <div
+                      key={idx}
+                      className={`bg-dark-800/50 rounded-xl border p-4 ${
+                        comp.status === 'healthy' ? 'border-success-500/30' :
+                        comp.status === 'degraded' ? 'border-warning-500/30' :
+                        'border-error-500/30'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className={`w-3 h-3 rounded-full ${
+                          comp.status === 'healthy' ? 'bg-success-500' :
+                          comp.status === 'degraded' ? 'bg-warning-500' :
+                          'bg-error-500'
+                        }`} />
+                        <div className="font-medium text-dark-100">{comp.name}</div>
+                      </div>
+                      <div className={`text-sm ${
+                        comp.status === 'healthy' ? 'text-success-400' :
+                        comp.status === 'degraded' ? 'text-warning-400' :
+                        'text-error-400'
+                      }`}>
+                        {comp.status}
+                      </div>
+                      {comp.message && (
+                        <div className="text-xs text-dark-500 mt-1">{comp.message}</div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}

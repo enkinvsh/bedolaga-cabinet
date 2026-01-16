@@ -176,6 +176,97 @@ export interface BanTrafficViolationsResponse {
   total: number
 }
 
+export interface BanTrafficTopItem {
+  username: string
+  bytes_total: number
+  bytes_limit: number | null
+  over_limit: boolean
+}
+
+export interface BanTrafficResponse {
+  enabled: boolean
+  stats: Record<string, unknown> | null
+  top_users: BanTrafficTopItem[]
+  recent_violations: BanTrafficViolationItem[]
+}
+
+// === Settings Types ===
+
+export interface BanSettingDefinition {
+  key: string
+  value: unknown
+  type: string
+  min_value: number | null
+  max_value: number | null
+  editable: boolean
+  description: string | null
+  category: string | null
+}
+
+export interface BanSettingsResponse {
+  settings: BanSettingDefinition[]
+}
+
+export interface BanWhitelistRequest {
+  username: string
+}
+
+// === Report Types ===
+
+export interface BanReportTopViolator {
+  username: string
+  count: number
+}
+
+export interface BanReportResponse {
+  period_hours: number
+  current_users: number
+  current_ips: number
+  punishment_stats: Record<string, unknown> | null
+  top_violators: BanReportTopViolator[]
+}
+
+// === Health Types ===
+
+export interface BanHealthComponent {
+  name: string
+  status: string
+  message: string | null
+  details: Record<string, unknown> | null
+}
+
+export interface BanHealthResponse {
+  status: string
+  uptime: number | null
+  components: BanHealthComponent[]
+}
+
+export interface BanHealthDetailedResponse {
+  status: string
+  uptime: number | null
+  components: Record<string, unknown>
+}
+
+// === Agent History Types ===
+
+export interface BanAgentHistoryItem {
+  timestamp: string
+  sent_total: number
+  dropped_total: number
+  queue_size: number
+  batches_total: number
+}
+
+export interface BanAgentHistoryResponse {
+  node: string
+  hours: number
+  records: number
+  delta: Record<string, unknown> | null
+  first: Record<string, unknown> | null
+  last: Record<string, unknown> | null
+  history: BanAgentHistoryItem[]
+}
+
 // === API ===
 
 export const banSystemApi = {
@@ -265,6 +356,88 @@ export const banSystemApi = {
   // Traffic violations
   getTrafficViolations: async (limit: number = 50): Promise<BanTrafficViolationsResponse> => {
     const response = await apiClient.get('/cabinet/admin/ban-system/traffic/violations', {
+      params: { limit }
+    })
+    return response.data
+  },
+
+  // Full Traffic
+  getTraffic: async (): Promise<BanTrafficResponse> => {
+    const response = await apiClient.get('/cabinet/admin/ban-system/traffic')
+    return response.data
+  },
+
+  getTrafficTop: async (limit: number = 20): Promise<BanTrafficTopItem[]> => {
+    const response = await apiClient.get('/cabinet/admin/ban-system/traffic/top', {
+      params: { limit }
+    })
+    return response.data
+  },
+
+  // Settings
+  getSettings: async (): Promise<BanSettingsResponse> => {
+    const response = await apiClient.get('/cabinet/admin/ban-system/settings')
+    return response.data
+  },
+
+  getSetting: async (key: string): Promise<BanSettingDefinition> => {
+    const response = await apiClient.get(`/cabinet/admin/ban-system/settings/${key}`)
+    return response.data
+  },
+
+  setSetting: async (key: string, value: string): Promise<BanSettingDefinition> => {
+    const response = await apiClient.post(`/cabinet/admin/ban-system/settings/${key}`, null, {
+      params: { value }
+    })
+    return response.data
+  },
+
+  toggleSetting: async (key: string): Promise<BanSettingDefinition> => {
+    const response = await apiClient.post(`/cabinet/admin/ban-system/settings/${key}/toggle`)
+    return response.data
+  },
+
+  // Whitelist
+  whitelistAdd: async (username: string): Promise<UnbanResponse> => {
+    const response = await apiClient.post('/cabinet/admin/ban-system/settings/whitelist/add', { username })
+    return response.data
+  },
+
+  whitelistRemove: async (username: string): Promise<UnbanResponse> => {
+    const response = await apiClient.post('/cabinet/admin/ban-system/settings/whitelist/remove', { username })
+    return response.data
+  },
+
+  // Reports
+  getReport: async (hours: number = 24): Promise<BanReportResponse> => {
+    const response = await apiClient.get('/cabinet/admin/ban-system/report', {
+      params: { hours }
+    })
+    return response.data
+  },
+
+  // Health
+  getHealth: async (): Promise<BanHealthResponse> => {
+    const response = await apiClient.get('/cabinet/admin/ban-system/health')
+    return response.data
+  },
+
+  getHealthDetailed: async (): Promise<BanHealthDetailedResponse> => {
+    const response = await apiClient.get('/cabinet/admin/ban-system/health/detailed')
+    return response.data
+  },
+
+  // Agent History
+  getAgentHistory: async (nodeName: string, hours: number = 24): Promise<BanAgentHistoryResponse> => {
+    const response = await apiClient.get(`/cabinet/admin/ban-system/agents/${encodeURIComponent(nodeName)}/history`, {
+      params: { hours }
+    })
+    return response.data
+  },
+
+  // User Punishment History
+  getUserHistory: async (email: string, limit: number = 20): Promise<BanHistoryResponse> => {
+    const response = await apiClient.get(`/cabinet/admin/ban-system/users/${encodeURIComponent(email)}/history`, {
       params: { limit }
     })
     return response.data

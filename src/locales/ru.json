@@ -18,7 +18,8 @@
     "and": "и",
     "edit": "Редактировать",
     "delete": "Удалить",
-    "currency": "₽"
+    "currency": "₽",
+    "refresh": "Обновить"
   },
   "nav": {
     "dashboard": "Главная",
@@ -758,7 +759,11 @@
       "punishments": "Баны",
       "nodes": "Ноды",
       "agents": "Агенты",
-      "violations": "Нарушения"
+      "violations": "Нарушения",
+      "traffic": "Трафик",
+      "reports": "Отчёты",
+      "settings": "Настройки",
+      "health": "Здоровье"
     },
     "stats": {
       "activeUsers": "Активных пользователей",
@@ -939,6 +944,45 @@
       "noViolations": "Нарушений не обнаружено",
       "yes": "Да",
       "no": "Нет"
+    },
+    "traffic": {
+      "title": "Статистика трафика",
+      "enabled": "Мониторинг трафика",
+      "topUsers": "Топ по трафику",
+      "username": "Пользователь",
+      "bytesTotal": "Всего",
+      "bytesLimit": "Лимит",
+      "status": "Статус",
+      "overLimit": "Превышен",
+      "ok": "OK",
+      "recentViolations": "Последние нарушения"
+    },
+    "reports": {
+      "title": "Отчёты за период",
+      "period": "Период",
+      "currentUsers": "Активных пользователей",
+      "currentIps": "Уникальных IP",
+      "topViolators": "Топ нарушителей",
+      "username": "Пользователь",
+      "count": "Нарушений"
+    },
+    "settings": {
+      "title": "Настройки системы",
+      "general": "Общие",
+      "limits": "Лимиты",
+      "notifications": "Уведомления",
+      "whitelist": "Белый список",
+      "saved": "Настройка сохранена",
+      "error": "Ошибка сохранения"
+    },
+    "health": {
+      "title": "Состояние системы",
+      "systemStatus": "Статус системы",
+      "healthy": "Здорова",
+      "degraded": "Деградация",
+      "unhealthy": "Проблема",
+      "components": "Компоненты",
+      "uptime": "Аптайм"
     }
   },
   "profile": {

@@ -18,7 +18,8 @@
     "and": "and",
     "edit": "Edit",
     "delete": "Delete",
-    "currency": "$"
+    "currency": "$",
+    "refresh": "Refresh"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -758,7 +759,11 @@
       "punishments": "Bans",
       "nodes": "Nodes",
       "agents": "Agents",
-      "violations": "Violations"
+      "violations": "Violations",
+      "traffic": "Traffic",
+      "reports": "Reports",
+      "settings": "Settings",
+      "health": "Health"
     },
     "stats": {
       "activeUsers": "Active Users",
@@ -939,6 +944,45 @@
       "noViolations": "No violations found",
       "yes": "Yes",
       "no": "No"
+    },
+    "traffic": {
+      "title": "Traffic Statistics",
+      "enabled": "Traffic Monitoring",
+      "topUsers": "Top by Traffic",
+      "username": "User",
+      "bytesTotal": "Total",
+      "bytesLimit": "Limit",
+      "status": "Status",
+      "overLimit": "Over Limit",
+      "ok": "OK",
+      "recentViolations": "Recent Violations"
+    },
+    "reports": {
+      "title": "Period Reports",
+      "period": "Period",
+      "currentUsers": "Active Users",
+      "currentIps": "Unique IPs",
+      "topViolators": "Top Violators",
+      "username": "User",
+      "count": "Violations"
+    },
+    "settings": {
+      "title": "System Settings",
+      "general": "General",
+      "limits": "Limits",
+      "notifications": "Notifications",
+      "whitelist": "Whitelist",
+      "saved": "Setting saved",
+      "error": "Error saving"
+    },
+    "health": {
+      "title": "System Health",
+      "systemStatus": "System Status",
+      "healthy": "Healthy",
+      "degraded": "Degraded",
+      "unhealthy": "Unhealthy",
+      "components": "Components",
+      "uptime": "Uptime"
     }
   },
   "profile": {
