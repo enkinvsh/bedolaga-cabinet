@@ -132,7 +132,6 @@ interface PeriodTariffModalProps {
 }
 
 function PeriodTariffModal({ tariff, servers, onSave, onClose, isLoading }: PeriodTariffModalProps) {
-  const { t } = useTranslation()
   const isEdit = !!tariff
 
   const [name, setName] = useState(tariff?.name || '')
