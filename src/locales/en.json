@@ -268,8 +268,8 @@
     "selectPaymentOption": "Select payment option",
     "paymentMethods": {
       "yookassa": {
-        "name": "YooKassa (Bank Card)",
-        "description": "Pay with bank card via YooKassa"
+        "name": "YooKassa",
+        "description": "Pay via YooKassa"
       },
       "cryptobot": {
         "name": "CryptoBot",
@@ -386,7 +386,7 @@
     "goToProfile": "Go to Profile",
     "useExternalLink": "Please use the external link to get support",
     "openSupport": "Open Support",
-    "contactSupport": "Please contact {username} for support",
+    "contactSupport": "Please contact {{username}} for support",
     "contactUs": "Contact Support"
   },
   "wheel": {
@@ -442,7 +442,8 @@
       "wheel": "Wheel",
       "tariffs": "Tariffs",
       "servers": "Servers",
-      "banSystem": "Ban Monitoring"
+      "banSystem": "Ban Monitoring",
+      "broadcasts": "Broadcasts"
     },
     "panel": {
       "title": "Admin Panel",
@@ -454,7 +455,8 @@
       "wheelDesc": "Configure fortune wheel and prizes",
       "tariffsDesc": "Manage tariff plans",
       "serversDesc": "Configure VPN servers",
-      "banSystemDesc": "Ban monitoring and violations"
+      "banSystemDesc": "Ban monitoring and violations",
+      "broadcastsDesc": "Mass messaging to users"
     },
     "wheel": {
       "title": "Fortune Wheel Settings",
@@ -513,6 +515,32 @@
         "times": "times",
         "topWins": "Top Wins"
       }
+    },
+    "broadcasts": {
+      "title": "Broadcasts",
+      "subtitle": "Mass messaging to users",
+      "create": "Create Broadcast",
+      "empty": "No broadcasts yet",
+      "selectFilter": "Select audience",
+      "selectFilterPlaceholder": "Select filter...",
+      "recipients": "recip.",
+      "messageText": "Message text",
+      "messageTextPlaceholder": "Enter broadcast message...",
+      "media": "Media file",
+      "addMedia": "Add media",
+      "uploading": "Uploading...",
+      "buttons": "Buttons",
+      "willBeSent": "Will be sent to",
+      "users": "users",
+      "send": "Send",
+      "stop": "Stop",
+      "progress": "Progress",
+      "total": "Total",
+      "sent": "Sent",
+      "failed": "Failed",
+      "filter": "Filter",
+      "message": "Message",
+      "unknownAdmin": "Unknown admin"
     },
     "settings": {
       "title": "System Settings",

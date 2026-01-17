@@ -26,6 +26,10 @@ import AdminServers from './pages/AdminServers'
 import AdminPanel from './pages/AdminPanel'
 import AdminDashboard from './pages/AdminDashboard'
 import AdminBanSystem from './pages/AdminBanSystem'
+import AdminBroadcasts from './pages/AdminBroadcasts'
+import AdminPromocodes from './pages/AdminPromocodes'
+import AdminCampaigns from './pages/AdminCampaigns'
+import AdminUsers from './pages/AdminUsers'
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuthStore()
@@ -223,6 +227,38 @@ function App() {
         element={
           <AdminRoute>
             <AdminBanSystem />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/broadcasts"
+        element={
+          <AdminRoute>
+            <AdminBroadcasts />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/promocodes"
+        element={
+          <AdminRoute>
+            <AdminPromocodes />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/campaigns"
+        element={
+          <AdminRoute>
+            <AdminCampaigns />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/users"
+        element={
+          <AdminRoute>
+            <AdminUsers />
           </AdminRoute>
         }
       />
