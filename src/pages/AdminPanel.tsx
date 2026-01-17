@@ -57,6 +57,12 @@ const BroadcastIcon = ({ className = "w-8 h-8" }: { className?: string }) => (
   </svg>
 )
 
+const PromocodeIcon = ({ className = "w-8 h-8" }: { className?: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 6v.75m0 3v.75m0 3v.75m0 3V18m-9-5.25h5.25M7.5 15h3M3.375 5.25c-.621 0-1.125.504-1.125 1.125v3.026a2.999 2.999 0 010 5.198v3.026c0 .621.504 1.125 1.125 1.125h17.25c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 010-5.198V6.375c0-.621-.504-1.125-1.125-1.125H3.375z" />
+  </svg>
+)
+
 const ChevronRightIcon = () => (
   <svg className="w-4 h-4 text-dark-500 group-hover:text-dark-300 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
@@ -195,6 +201,16 @@ export default function AdminPanel() {
       color: 'orange',
       bgColor: 'bg-orange-500/20',
       textColor: 'text-orange-400'
+    },
+    {
+      to: '/admin/promocodes',
+      icon: <PromocodeIcon />,
+      mobileIcon: <PromocodeIcon className="w-6 h-6" />,
+      title: t('admin.nav.promocodes', 'Промокоды'),
+      description: t('admin.panel.promocodesDesc', 'Управление промокодами'),
+      color: 'violet',
+      bgColor: 'bg-violet-500/20',
+      textColor: 'text-violet-400'
     },
   ]
 
