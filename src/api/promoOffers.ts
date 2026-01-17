@@ -45,20 +45,16 @@ export interface PromoOfferListResponse {
   offset: number
 }
 
-export interface PromoOfferCreateRequest {
-  user_id?: number
-  telegram_id?: number
+export interface PromoOfferBroadcastRequest {
   notification_type: string
   valid_hours: number
   discount_percent?: number
   bonus_amount_kopeks?: number
-  subscription_id?: number
   effect_type?: string
   extra_data?: Record<string, any>
-}
-
-export interface PromoOfferBroadcastRequest extends PromoOfferCreateRequest {
   target?: string
+  user_id?: number
+  telegram_id?: number
 }
 
 export interface PromoOfferBroadcastResponse {
@@ -188,29 +184,15 @@ export const promoOffersApi = {
     limit?: number
     offset?: number
     user_id?: number
-    telegram_id?: number
-    notification_type?: string
     is_active?: boolean
   }): Promise<PromoOfferListResponse> => {
-    const response = await apiClient.get('/api/promo-offers', { params })
-    return response.data
-  },
-
-  // Get single offer
-  getOffer: async (id: number): Promise<PromoOffer> => {
-    const response = await apiClient.get(`/api/promo-offers/${id}`)
-    return response.data
-  },
-
-  // Create single offer
-  createOffer: async (data: PromoOfferCreateRequest): Promise<PromoOffer> => {
-    const response = await apiClient.post('/api/promo-offers', data)
+    const response = await apiClient.get('/cabinet/admin/promo-offers', { params })
     return response.data
   },
 
   // Broadcast offer to multiple users
   broadcastOffer: async (data: PromoOfferBroadcastRequest): Promise<PromoOfferBroadcastResponse> => {
-    const response = await apiClient.post('/api/promo-offers/broadcast', data)
+    const response = await apiClient.post('/cabinet/admin/promo-offers/broadcast', data)
     return response.data
   },
 
@@ -219,29 +201,27 @@ export const promoOffersApi = {
     limit?: number
     offset?: number
     user_id?: number
-    offer_id?: number
     action?: string
-    source?: string
   }): Promise<PromoOfferLogListResponse> => {
-    const response = await apiClient.get('/api/promo-offers/logs', { params })
+    const response = await apiClient.get('/cabinet/admin/promo-offers/logs', { params })
     return response.data
   },
 
   // Get all templates
   getTemplates: async (): Promise<PromoOfferTemplateListResponse> => {
-    const response = await apiClient.get('/api/promo-offers/templates')
+    const response = await apiClient.get('/cabinet/admin/promo-offers/templates')
     return response.data
   },
 
   // Get single template
   getTemplate: async (id: number): Promise<PromoOfferTemplate> => {
-    const response = await apiClient.get(`/api/promo-offers/templates/${id}`)
+    const response = await apiClient.get(`/cabinet/admin/promo-offers/templates/${id}`)
     return response.data
   },
 
   // Update template
   updateTemplate: async (id: number, data: PromoOfferTemplateUpdateRequest): Promise<PromoOfferTemplate> => {
-    const response = await apiClient.patch(`/api/promo-offers/templates/${id}`, data)
+    const response = await apiClient.patch(`/cabinet/admin/promo-offers/templates/${id}`, data)
     return response.data
   },
 }
