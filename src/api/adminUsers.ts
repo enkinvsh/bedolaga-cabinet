@@ -209,11 +209,15 @@ export interface PanelSyncStatusResponse {
   bot_subscription_end_date: string | null
   bot_traffic_limit_gb: number
   bot_traffic_used_gb: number
+  bot_device_limit: number
+  bot_squads: string[]
   panel_found: boolean
   panel_status: string | null
   panel_expire_at: string | null
   panel_traffic_limit_gb: number
   panel_traffic_used_gb: number
+  panel_device_limit: number
+  panel_squads: string[]
   has_differences: boolean
   differences: string[]
 }
