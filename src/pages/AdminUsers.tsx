@@ -701,6 +701,14 @@ function UserDetailModal({ userId, onClose, onUpdate }: UserDetailModalProps) {
                           <span className="text-dark-400">Трафик:</span>
                           <span className="text-dark-200">{syncStatus.bot_traffic_used_gb.toFixed(2)} ГБ</span>
                         </div>
+                        <div className="flex justify-between">
+                          <span className="text-dark-400">Устройства:</span>
+                          <span className="text-dark-200">{syncStatus.bot_device_limit}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-dark-400">Сквады:</span>
+                          <span className="text-dark-200">{syncStatus.bot_squads?.length || 0}</span>
+                        </div>
                       </div>
                     </div>
                     <div>
@@ -713,6 +721,14 @@ function UserDetailModal({ userId, onClose, onUpdate }: UserDetailModalProps) {
                         <div className="flex justify-between">
                           <span className="text-dark-400">Трафик:</span>
                           <span className="text-dark-200">{syncStatus.panel_traffic_used_gb.toFixed(2)} ГБ</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-dark-400">Устройства:</span>
+                          <span className="text-dark-200">{syncStatus.panel_device_limit}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-dark-400">Сквады:</span>
+                          <span className="text-dark-200">{syncStatus.panel_squads?.length || 0}</span>
                         </div>
                       </div>
                     </div>
