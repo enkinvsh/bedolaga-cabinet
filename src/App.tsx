@@ -25,6 +25,7 @@ import AdminTariffs from './pages/AdminTariffs'
 import AdminServers from './pages/AdminServers'
 import AdminPanel from './pages/AdminPanel'
 import AdminDashboard from './pages/AdminDashboard'
+import AdminBanSystem from './pages/AdminBanSystem'
 import AdminBroadcasts from './pages/AdminBroadcasts'
 import AdminPromocodes from './pages/AdminPromocodes'
 import AdminCampaigns from './pages/AdminCampaigns'
@@ -221,6 +222,14 @@ function App() {
         element={
           <AdminRoute>
             <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/ban-system"
+        element={
+          <AdminRoute>
+            <AdminBanSystem />
           </AdminRoute>
         }
       />
