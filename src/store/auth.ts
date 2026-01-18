@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '../types'
 import { authApi } from '../api/auth'
+import { tokenStorage, isTokenValid } from '../utils/token'
 
 export interface TelegramWidgetData {
   id: number
@@ -44,8 +45,7 @@ export const useAuthStore = create<AuthState>()(
       isAdmin: false,
 
       setTokens: (accessToken, refreshToken) => {
-        localStorage.setItem('access_token', accessToken)
-        localStorage.setItem('refresh_token', refreshToken)
+        tokenStorage.setTokens(accessToken, refreshToken)
         set({
           accessToken,
           refreshToken,
@@ -66,8 +66,7 @@ export const useAuthStore = create<AuthState>()(
         if (refreshToken) {
           authApi.logout(refreshToken).catch(console.error)
         }
-        localStorage.removeItem('access_token')
-        localStorage.removeItem('refresh_token')
+        tokenStorage.clearTokens()
         set({
           accessToken: null,
           refreshToken: null,
@@ -79,9 +78,14 @@ export const useAuthStore = create<AuthState>()(
 
       checkAdminStatus: async () => {
         try {
+          const token = tokenStorage.getAccessToken()
+          if (!token || !isTokenValid(token)) {
+            set({ isAdmin: false })
+            return
+          }
           const response = await fetch('/api/cabinet/auth/me/is-admin', {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('access_token')}`,
+              Authorization: `Bearer ${token}`,
             },
           })
           if (response.ok) {
@@ -105,12 +109,45 @@ export const useAuthStore = create<AuthState>()(
 
       initialize: async () => {
         set({ isLoading: true })
-        const accessToken = localStorage.getItem('access_token')
-        const refreshToken = localStorage.getItem('refresh_token')
+
+        // Миграция токенов из localStorage (для обратной совместимости)
+        tokenStorage.migrateFromLocalStorage()
+
+        const accessToken = tokenStorage.getAccessToken()
+        const refreshToken = tokenStorage.getRefreshToken()
 
         if (!accessToken || !refreshToken) {
           set({ isLoading: false, isAuthenticated: false })
           return
+        }
+
+        // Проверяем валидность токена перед использованием
+        if (!isTokenValid(accessToken)) {
+          // Токен истёк, пробуем обновить
+          try {
+            const response = await authApi.refreshToken(refreshToken)
+            tokenStorage.setAccessToken(response.access_token)
+            const user = await authApi.getMe()
+            set({
+              accessToken: response.access_token,
+              refreshToken,
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+            })
+            get().checkAdminStatus()
+            return
+          } catch {
+            tokenStorage.clearTokens()
+            set({
+              accessToken: null,
+              refreshToken: null,
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+            })
+            return
+          }
         }
 
         try {
@@ -122,13 +159,12 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false,
           })
-          // Check admin status
           get().checkAdminStatus()
         } catch (error) {
-          // Token might be expired, try to refresh
+          // Token might be invalid, try to refresh
           try {
             const response = await authApi.refreshToken(refreshToken)
-            localStorage.setItem('access_token', response.access_token)
+            tokenStorage.setAccessToken(response.access_token)
             const user = await authApi.getMe()
             set({
               accessToken: response.access_token,
@@ -137,12 +173,10 @@ export const useAuthStore = create<AuthState>()(
               isAuthenticated: true,
               isLoading: false,
             })
-            // Check admin status
             get().checkAdminStatus()
           } catch {
             // Refresh failed, logout
-            localStorage.removeItem('access_token')
-            localStorage.removeItem('refresh_token')
+            tokenStorage.clearTokens()
             set({
               accessToken: null,
               refreshToken: null,
@@ -156,8 +190,7 @@ export const useAuthStore = create<AuthState>()(
 
       loginWithTelegram: async (initData) => {
         const response = await authApi.loginTelegram(initData)
-        localStorage.setItem('access_token', response.access_token)
-        localStorage.setItem('refresh_token', response.refresh_token)
+        tokenStorage.setTokens(response.access_token, response.refresh_token)
         set({
           accessToken: response.access_token,
           refreshToken: response.refresh_token,
@@ -169,8 +202,7 @@ export const useAuthStore = create<AuthState>()(
 
       loginWithTelegramWidget: async (data) => {
         const response = await authApi.loginTelegramWidget(data)
-        localStorage.setItem('access_token', response.access_token)
-        localStorage.setItem('refresh_token', response.refresh_token)
+        tokenStorage.setTokens(response.access_token, response.refresh_token)
         set({
           accessToken: response.access_token,
           refreshToken: response.refresh_token,
@@ -182,8 +214,7 @@ export const useAuthStore = create<AuthState>()(
 
       loginWithEmail: async (email, password) => {
         const response = await authApi.loginEmail(email, password)
-        localStorage.setItem('access_token', response.access_token)
-        localStorage.setItem('refresh_token', response.refresh_token)
+        tokenStorage.setTokens(response.access_token, response.refresh_token)
         set({
           accessToken: response.access_token,
           refreshToken: response.refresh_token,
