@@ -272,9 +272,9 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
   // Step 1: Select platform
   if (!selectedPlatform) {
     return (
-      <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center" onClick={onClose}>
+      <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center p-0 sm:p-4" onClick={onClose}>
         <div
-          className="w-full sm:max-w-md sm:mx-4 bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[90vh] flex flex-col animate-slide-up"
+          className="w-full sm:max-w-md bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-slide-up"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -364,9 +364,9 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
   // Step 2: Select app
   if (!selectedApp) {
     return (
-      <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center" onClick={onClose}>
+      <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center p-0 sm:p-4" onClick={onClose}>
         <div
-          className="w-full sm:max-w-md sm:mx-4 bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[90vh] flex flex-col animate-slide-up"
+          className="w-full sm:max-w-md bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-slide-up"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -432,9 +432,9 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
 
   // Step 3: App instructions
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center p-0 sm:p-4" onClick={onClose}>
       <div
-        className="w-full sm:max-w-md sm:mx-4 bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[90vh] flex flex-col animate-slide-up"
+        className="w-full sm:max-w-md bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
