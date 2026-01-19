@@ -310,8 +310,8 @@ export default function Layout({ children }: LayoutProps) {
         <div
           className="w-full mx-auto px-4 sm:px-6"
           style={{
-            // In fullscreen mode, add right padding for Telegram native controls (close/menu buttons)
-            paddingRight: isFullscreen ? '100px' : undefined,
+            // In fullscreen mode, add left padding for Telegram native controls (close/menu buttons)
+            paddingLeft: isFullscreen ? '100px' : undefined,
           }}
         >
           <div className="flex justify-between items-center h-16 lg:h-20">
