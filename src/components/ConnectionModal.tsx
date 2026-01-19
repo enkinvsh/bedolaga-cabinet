@@ -93,6 +93,82 @@ const platformIconComponents: Record<string, React.FC> = {
   appleTV: TvIcon,
 }
 
+// Helper components
+interface ModalContentProps {
+  title: string
+  subtitle?: string
+  onClose: () => void
+  onBack?: () => void
+  icon?: string
+  children: React.ReactNode
+}
+
+const ModalContent = ({ title, subtitle, onClose, onBack, icon, children }: ModalContentProps) => (
+  <>
+    <div className="flex items-center justify-between p-4 border-b border-dark-800">
+      <div className="flex items-center gap-3">
+        {onBack && (
+          <button onClick={onBack} className="p-2 -ml-2 rounded-xl hover:bg-dark-800 text-dark-400 hover:text-dark-200 transition-colors">
+            <BackIcon />
+          </button>
+        )}
+        {icon && !onBack && (
+          <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
+            <span className="text-xl">{icon}</span>
+          </div>
+        )}
+        <div>
+          <h2 className="font-semibold text-dark-100">{title}</h2>
+          {subtitle && <p className="text-xs text-dark-500">{subtitle}</p>}
+        </div>
+      </div>
+      <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-800 text-dark-400 hover:text-dark-200 transition-colors">
+        <CloseIcon />
+      </button>
+    </div>
+    <div className="flex-1 overflow-y-auto p-4">
+      {children}
+    </div>
+  </>
+)
+
+interface CopyLinkButtonProps {
+  copied: boolean
+  onClick: () => void
+  t: (key: string) => string
+  compact?: boolean
+}
+
+const CopyLinkButton = ({ copied, onClick, t, compact }: CopyLinkButtonProps) => (
+  <button
+    onClick={onClick}
+    className={`w-full p-3 rounded-2xl border-2 border-dashed transition-all flex items-center justify-center gap-3 ${
+      copied
+        ? 'border-success-500/50 bg-success-500/10'
+        : 'border-dark-700 hover:border-accent-500/50 hover:bg-dark-800/50'
+    }`}
+  >
+    {copied ? (
+      <>
+        <div className="w-8 h-8 rounded-full bg-success-500/20 flex items-center justify-center text-success-400">
+          <CheckIcon />
+        </div>
+        <span className="font-medium text-success-400">{t('subscription.connection.copied')}</span>
+      </>
+    ) : (
+      <>
+        <div className="w-8 h-8 rounded-full bg-dark-700 flex items-center justify-center text-dark-400">
+          <CopyIcon />
+        </div>
+        <div className="text-left">
+          <p className="font-medium text-dark-200">{t('subscription.connection.copyLink')}</p>
+          {!compact && <p className="text-xs text-dark-500">Для ручного подключения</p>}
+        </div>
+      </>
+    )}
+  </button>
+)
+
 // Platform order for display
 const platformOrder = ['ios', 'android', 'windows', 'macos', 'linux', 'androidTV', 'appleTV']
 
@@ -272,89 +348,120 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
   // Step 1: Select platform
   if (!selectedPlatform) {
     return (
-      <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center p-0 sm:p-4" onClick={onClose}>
+      <div className="fixed inset-0 bg-black/70 z-50" onClick={onClose}>
+        {/* Desktop: centered modal */}
+        <div className="hidden sm:flex items-center justify-center min-h-screen p-4">
+          <div
+            className="w-full max-w-md bg-dark-900 rounded-2xl border border-dark-700/50 max-h-[90vh] flex flex-col animate-scale-in"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ModalContent
+              title={t('subscription.connection.title')}
+              subtitle={t('subscription.connection.selectDevice')}
+              onClose={onClose}
+              icon="📱"
+            >
+              <div className="grid grid-cols-2 gap-3">
+                {availablePlatforms.map((platform) => {
+                  const IconComponent = platformIconComponents[platform]
+                  const isDetected = platform === detectedPlatform
+                  return (
+                    <button
+                      key={platform}
+                      onClick={() => setSelectedPlatform(platform)}
+                      className={`relative p-4 rounded-2xl border-2 transition-all text-left group ${
+                        isDetected
+                          ? 'bg-accent-500/10 border-accent-500/50 hover:border-accent-500'
+                          : 'bg-dark-800/50 border-dark-700/50 hover:border-dark-600 hover:bg-dark-800'
+                      }`}
+                    >
+                      {isDetected && (
+                        <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent-500 text-white">
+                          {t('subscription.connection.yourDevice')}
+                        </div>
+                      )}
+                      <div className={`mb-3 ${isDetected ? 'text-accent-400' : 'text-dark-400 group-hover:text-dark-300'} transition-colors`}>
+                        {IconComponent && <IconComponent />}
+                      </div>
+                      <p className={`font-medium ${isDetected ? 'text-accent-300' : 'text-dark-200'}`}>
+                        {getPlatformName(platform)}
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
+            </ModalContent>
+            <div className="p-4 border-t border-dark-800">
+              <CopyLinkButton copied={copied} onClick={copySubscriptionLink} t={t} />
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile: bottom sheet */}
         <div
-          className="w-full sm:max-w-md bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-slide-up"
+          className="sm:hidden fixed bottom-0 left-0 right-0 bg-dark-900 rounded-t-3xl border-t border-dark-700/50 animate-slide-up"
+          style={{ maxHeight: '80vh' }}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-dark-800">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
-                <span className="text-xl">📱</span>
-              </div>
-              <div>
-                <h2 className="font-semibold text-dark-100">{t('subscription.connection.title')}</h2>
-                <p className="text-xs text-dark-500">{t('subscription.connection.selectDevice')}</p>
-              </div>
+          <div className="flex flex-col h-full" style={{ maxHeight: '80vh' }}>
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-dark-700" />
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-800 text-dark-400 hover:text-dark-200 transition-colors">
-              <CloseIcon />
-            </button>
-          </div>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="grid grid-cols-2 gap-3">
-              {availablePlatforms.map((platform) => {
-                const IconComponent = platformIconComponents[platform]
-                const isDetected = platform === detectedPlatform
-                return (
-                  <button
-                    key={platform}
-                    onClick={() => setSelectedPlatform(platform)}
-                    className={`relative p-4 rounded-2xl border-2 transition-all text-left group ${
-                      isDetected
-                        ? 'bg-accent-500/10 border-accent-500/50 hover:border-accent-500'
-                        : 'bg-dark-800/50 border-dark-700/50 hover:border-dark-600 hover:bg-dark-800'
-                    }`}
-                  >
-                    {isDetected && (
-                      <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent-500 text-white">
-                        {t('subscription.connection.yourDevice')}
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-accent-500/10 flex items-center justify-center">
+                  <span className="text-xl">📱</span>
+                </div>
+                <div>
+                  <h2 className="font-semibold text-dark-100">{t('subscription.connection.title')}</h2>
+                  <p className="text-xs text-dark-500">{t('subscription.connection.selectDevice')}</p>
+                </div>
+              </div>
+              <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-800 text-dark-400">
+                <CloseIcon />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-4 pb-2">
+              <div className="grid grid-cols-2 gap-3">
+                {availablePlatforms.map((platform) => {
+                  const IconComponent = platformIconComponents[platform]
+                  const isDetected = platform === detectedPlatform
+                  return (
+                    <button
+                      key={platform}
+                      onClick={() => setSelectedPlatform(platform)}
+                      className={`relative p-4 rounded-2xl border-2 transition-all text-left ${
+                        isDetected
+                          ? 'bg-accent-500/10 border-accent-500/50'
+                          : 'bg-dark-800/50 border-dark-700/50'
+                      }`}
+                    >
+                      {isDetected && (
+                        <div className="absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-accent-500 text-white">
+                          {t('subscription.connection.yourDevice')}
+                        </div>
+                      )}
+                      <div className={`mb-2 ${isDetected ? 'text-accent-400' : 'text-dark-400'}`}>
+                        {IconComponent && <IconComponent />}
                       </div>
-                    )}
-                    <div className={`mb-3 ${isDetected ? 'text-accent-400' : 'text-dark-400 group-hover:text-dark-300'} transition-colors`}>
-                      {IconComponent && <IconComponent />}
-                    </div>
-                    <p className={`font-medium ${isDetected ? 'text-accent-300' : 'text-dark-200'}`}>
-                      {getPlatformName(platform)}
-                    </p>
-                  </button>
-                )
-              })}
+                      <p className={`font-medium text-sm ${isDetected ? 'text-accent-300' : 'text-dark-200'}`}>
+                        {getPlatformName(platform)}
+                      </p>
+                    </button>
+                  )
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Footer */}
-          <div className="p-4 border-t border-dark-800 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4">
-            <button
-              onClick={copySubscriptionLink}
-              className={`w-full p-4 rounded-2xl border-2 border-dashed transition-all flex items-center justify-center gap-3 ${
-                copied
-                  ? 'border-success-500/50 bg-success-500/10'
-                  : 'border-dark-700 hover:border-accent-500/50 hover:bg-dark-800/50'
-              }`}
-            >
-              {copied ? (
-                <>
-                  <div className="w-8 h-8 rounded-full bg-success-500/20 flex items-center justify-center">
-                    <CheckIcon />
-                  </div>
-                  <span className="font-medium text-success-400">{t('subscription.connection.copied')}</span>
-                </>
-              ) : (
-                <>
-                  <div className="w-8 h-8 rounded-full bg-dark-700 flex items-center justify-center text-dark-400">
-                    <CopyIcon />
-                  </div>
-                  <div className="text-left">
-                    <p className="font-medium text-dark-200">{t('subscription.connection.copyLink')}</p>
-                    <p className="text-xs text-dark-500">Для ручного подключения</p>
-                  </div>
-                </>
-              )}
-            </button>
+            {/* Footer */}
+            <div className="p-4 border-t border-dark-800" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+              <CopyLinkButton copied={copied} onClick={copySubscriptionLink} t={t} />
+            </div>
           </div>
         </div>
       </div>
@@ -363,189 +470,235 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
 
   // Step 2: Select app
   if (!selectedApp) {
-    return (
-      <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center p-0 sm:p-4" onClick={onClose}>
-        <div
-          className="w-full sm:max-w-md bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-slide-up"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b border-dark-800">
-            <div className="flex items-center gap-2">
-              <button onClick={() => setSelectedPlatform(null)} className="p-2 -ml-2 rounded-xl hover:bg-dark-800 text-dark-400 hover:text-dark-200 transition-colors">
-                <BackIcon />
-              </button>
-              <div>
-                <h2 className="font-semibold text-dark-100">{getPlatformName(selectedPlatform)}</h2>
-                <p className="text-xs text-dark-500">{t('subscription.connection.selectApp')}</p>
+    const appListContent = platformApps.length === 0 ? (
+      <div className="text-center py-12">
+        <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-dark-800 flex items-center justify-center">
+          <span className="text-3xl">📭</span>
+        </div>
+        <p className="text-dark-500">{t('subscription.connection.noApps')}</p>
+      </div>
+    ) : (
+      <div className="space-y-2">
+        {platformApps.map((app) => (
+          <button
+            key={app.id}
+            onClick={() => setSelectedApp(app)}
+            className="w-full p-4 rounded-2xl bg-dark-800/50 border border-dark-700/50 hover:border-dark-600 hover:bg-dark-800 transition-all flex items-center justify-between group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-dark-700 flex items-center justify-center text-lg">
+                {app.isFeatured ? '⭐' : '📦'}
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-dark-100">{app.name}</span>
+                  {app.isFeatured && (
+                    <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-accent-500/20 text-accent-400">
+                      {t('subscription.connection.featured')}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-            <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-800 text-dark-400 hover:text-dark-200 transition-colors">
-              <CloseIcon />
-            </button>
-          </div>
+            <div className="text-dark-500 group-hover:text-dark-300 transition-colors">
+              <ChevronIcon />
+            </div>
+          </button>
+        ))}
+      </div>
+    )
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto p-4 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4">
-            {platformApps.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-dark-800 flex items-center justify-center">
-                  <span className="text-3xl">📭</span>
+    return (
+      <div className="fixed inset-0 bg-black/70 z-50" onClick={onClose}>
+        {/* Desktop */}
+        <div className="hidden sm:flex items-center justify-center min-h-screen p-4">
+          <div className="w-full max-w-md bg-dark-900 rounded-2xl border border-dark-700/50 max-h-[90vh] flex flex-col animate-scale-in" onClick={(e) => e.stopPropagation()}>
+            <ModalContent title={getPlatformName(selectedPlatform)} subtitle={t('subscription.connection.selectApp')} onClose={onClose} onBack={() => setSelectedPlatform(null)}>
+              {appListContent}
+            </ModalContent>
+          </div>
+        </div>
+
+        {/* Mobile */}
+        <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-dark-900 rounded-t-3xl border-t border-dark-700/50 animate-slide-up" style={{ maxHeight: '80vh' }} onClick={(e) => e.stopPropagation()}>
+          <div className="flex flex-col" style={{ maxHeight: '80vh' }}>
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-dark-700" />
+            </div>
+            <div className="flex items-center justify-between px-4 pb-3">
+              <div className="flex items-center gap-2">
+                <button onClick={() => setSelectedPlatform(null)} className="p-2 -ml-2 rounded-xl hover:bg-dark-800 text-dark-400">
+                  <BackIcon />
+                </button>
+                <div>
+                  <h2 className="font-semibold text-dark-100">{getPlatformName(selectedPlatform)}</h2>
+                  <p className="text-xs text-dark-500">{t('subscription.connection.selectApp')}</p>
                 </div>
-                <p className="text-dark-500">{t('subscription.connection.noApps')}</p>
               </div>
-            ) : (
-              <div className="space-y-2">
-                {platformApps.map((app) => (
-                  <button
-                    key={app.id}
-                    onClick={() => setSelectedApp(app)}
-                    className="w-full p-4 rounded-2xl bg-dark-800/50 border border-dark-700/50 hover:border-dark-600 hover:bg-dark-800 transition-all flex items-center justify-between group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-dark-700 flex items-center justify-center text-lg">
-                        {app.isFeatured ? '⭐' : '📦'}
-                      </div>
-                      <div className="text-left">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-dark-100">{app.name}</span>
-                          {app.isFeatured && (
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-accent-500/20 text-accent-400">
-                              {t('subscription.connection.featured')}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-dark-500 group-hover:text-dark-300 transition-colors">
-                      <ChevronIcon />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
+              <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-800 text-dark-400">
+                <CloseIcon />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pb-4" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+              {appListContent}
+            </div>
           </div>
         </div>
       </div>
     )
   }
 
-  // Step 3: App instructions
+  // Step 3: App instructions - shared content
+  const instructionsContent = (
+    <div className="space-y-4">
+      {/* Step 1: Install */}
+      {selectedApp.installationStep && (
+        <div className="p-4 rounded-2xl bg-dark-800/50 border border-dark-700/50">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center text-sm font-bold text-accent-400">1</div>
+            <h3 className="font-medium text-dark-100">{t('subscription.connection.installApp')}</h3>
+          </div>
+          <p className="text-sm text-dark-400 mb-3 pl-11">
+            {getLocalizedText(selectedApp.installationStep.description)}
+          </p>
+          {selectedApp.installationStep.buttons && selectedApp.installationStep.buttons.length > 0 && (
+            <div className="flex flex-wrap gap-2 pl-11">
+              {selectedApp.installationStep.buttons
+                .filter((btn) => isValidExternalUrl(btn.buttonLink))
+                .map((btn, idx) => (
+                <a
+                  key={idx}
+                  href={btn.buttonLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-700 text-dark-200 text-sm hover:bg-dark-600 transition-all"
+                >
+                  <LinkIcon />
+                  {getLocalizedText(btn.buttonText)}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Step 2: Add subscription */}
+      {selectedApp.addSubscriptionStep && (
+        <div className="p-4 rounded-2xl bg-dark-800/50 border border-dark-700/50">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center text-sm font-bold text-accent-400">2</div>
+            <h3 className="font-medium text-dark-100">{t('subscription.connection.addSubscription')}</h3>
+          </div>
+          <p className="text-sm text-dark-400 mb-4 pl-11">
+            {getLocalizedText(selectedApp.addSubscriptionStep.description)}
+          </p>
+
+          <div className="space-y-2 pl-11">
+            {/* Connect button */}
+            {selectedApp.deepLink && (
+              <button
+                onClick={() => handleConnect(selectedApp)}
+                className="btn-primary w-full py-3 flex items-center justify-center gap-2"
+              >
+                <LinkIcon />
+                {t('subscription.connection.addToApp', { appName: selectedApp.name })}
+              </button>
+            )}
+
+            {/* Copy link */}
+            <button
+              onClick={copySubscriptionLink}
+              className={`w-full p-3 rounded-xl border transition-all flex items-center justify-center gap-2 ${
+                copied
+                  ? 'border-success-500/50 bg-success-500/10 text-success-400'
+                  : 'border-dark-700 hover:border-dark-600 bg-dark-800/50 text-dark-300'
+              }`}
+            >
+              {copied ? <CheckIcon /> : <CopyIcon />}
+              {copied ? t('subscription.connection.copied') : t('subscription.connection.copyLink')}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Step 3: Connect */}
+      {selectedApp.connectAndUseStep && (
+        <div className="p-4 rounded-2xl bg-dark-800/50 border border-dark-700/50">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-8 h-8 rounded-full bg-success-500/20 flex items-center justify-center text-sm font-bold text-success-400">3</div>
+            <h3 className="font-medium text-dark-100">{t('subscription.connection.connectVpn')}</h3>
+          </div>
+          <p className="text-sm text-dark-400 pl-11">
+            {getLocalizedText(selectedApp.connectAndUseStep.description)}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+
   return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-end sm:items-center sm:justify-center p-0 sm:p-4" onClick={onClose}>
+    <div className="fixed inset-0 bg-black/70 z-50" onClick={onClose}>
+      {/* Desktop: centered modal */}
+      <div className="hidden sm:flex items-center justify-center min-h-screen p-4">
+        <div
+          className="w-full max-w-md bg-dark-900 rounded-2xl border border-dark-700/50 max-h-[90vh] flex flex-col animate-scale-in"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <ModalContent
+            title={selectedApp.name}
+            subtitle={t('subscription.connection.instructions')}
+            onClose={onClose}
+            onBack={() => setSelectedApp(null)}
+          >
+            {instructionsContent}
+          </ModalContent>
+          <div className="p-4 border-t border-dark-800">
+            <button onClick={onClose} className="btn-secondary w-full">
+              {t('common.close')}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile: bottom sheet */}
       <div
-        className="w-full sm:max-w-md bg-dark-900 sm:rounded-2xl rounded-t-3xl border-t sm:border border-dark-700/50 max-h-[85vh] sm:max-h-[90vh] flex flex-col animate-slide-up"
+        className="sm:hidden fixed bottom-0 left-0 right-0 bg-dark-900 rounded-t-3xl border-t border-dark-700/50 animate-slide-up"
+        style={{ maxHeight: '80vh' }}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-dark-800">
-          <div className="flex items-center gap-2">
-            <button onClick={() => setSelectedApp(null)} className="p-2 -ml-2 rounded-xl hover:bg-dark-800 text-dark-400 hover:text-dark-200 transition-colors">
-              <BackIcon />
-            </button>
-            <div>
-              <h2 className="font-semibold text-dark-100">{selectedApp.name}</h2>
-              <p className="text-xs text-dark-500">Инструкция по подключению</p>
+        <div className="flex flex-col" style={{ maxHeight: '80vh' }}>
+          {/* Handle */}
+          <div className="flex justify-center pt-3 pb-1">
+            <div className="w-10 h-1 rounded-full bg-dark-700" />
+          </div>
+
+          {/* Header */}
+          <div className="flex items-center justify-between px-4 pb-3">
+            <div className="flex items-center gap-2">
+              <button onClick={() => setSelectedApp(null)} className="p-2 -ml-2 rounded-xl hover:bg-dark-800 text-dark-400">
+                <BackIcon />
+              </button>
+              <div>
+                <h2 className="font-semibold text-dark-100">{selectedApp.name}</h2>
+                <p className="text-xs text-dark-500">{t('subscription.connection.instructions')}</p>
+              </div>
             </div>
+            <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-800 text-dark-400">
+              <CloseIcon />
+            </button>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-dark-800 text-dark-400 hover:text-dark-200 transition-colors">
-            <CloseIcon />
-          </button>
-        </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          <div className="space-y-4">
-            {/* Step 1: Install */}
-            {selectedApp.installationStep && (
-              <div className="p-4 rounded-2xl bg-dark-800/50 border border-dark-700/50">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center text-sm font-bold text-accent-400">1</div>
-                  <h3 className="font-medium text-dark-100">{t('subscription.connection.installApp')}</h3>
-                </div>
-                <p className="text-sm text-dark-400 mb-3 pl-11">
-                  {getLocalizedText(selectedApp.installationStep.description)}
-                </p>
-                {selectedApp.installationStep.buttons && selectedApp.installationStep.buttons.length > 0 && (
-                  <div className="flex flex-wrap gap-2 pl-11">
-                    {selectedApp.installationStep.buttons
-                      .filter((btn) => isValidExternalUrl(btn.buttonLink))
-                      .map((btn, idx) => (
-                      <a
-                        key={idx}
-                        href={btn.buttonLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-700 text-dark-200 text-sm hover:bg-dark-600 transition-all"
-                      >
-                        <LinkIcon />
-                        {getLocalizedText(btn.buttonText)}
-                      </a>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Step 2: Add subscription */}
-            {selectedApp.addSubscriptionStep && (
-              <div className="p-4 rounded-2xl bg-dark-800/50 border border-dark-700/50">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-accent-500/20 flex items-center justify-center text-sm font-bold text-accent-400">2</div>
-                  <h3 className="font-medium text-dark-100">{t('subscription.connection.addSubscription')}</h3>
-                </div>
-                <p className="text-sm text-dark-400 mb-4 pl-11">
-                  {getLocalizedText(selectedApp.addSubscriptionStep.description)}
-                </p>
-
-                <div className="space-y-2 pl-11">
-                  {/* Connect button */}
-                  {selectedApp.deepLink && (
-                    <button
-                      onClick={() => handleConnect(selectedApp)}
-                      className="btn-primary w-full py-3 flex items-center justify-center gap-2"
-                    >
-                      <LinkIcon />
-                      {t('subscription.connection.addToApp', { appName: selectedApp.name })}
-                    </button>
-                  )}
-
-                  {/* Copy link */}
-                  <button
-                    onClick={copySubscriptionLink}
-                    className={`w-full p-3 rounded-xl border transition-all flex items-center justify-center gap-2 ${
-                      copied
-                        ? 'border-success-500/50 bg-success-500/10 text-success-400'
-                        : 'border-dark-700 hover:border-dark-600 bg-dark-800/50 text-dark-300'
-                    }`}
-                  >
-                    {copied ? <CheckIcon /> : <CopyIcon />}
-                    {copied ? t('subscription.connection.copied') : t('subscription.connection.copyLink')}
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Connect */}
-            {selectedApp.connectAndUseStep && (
-              <div className="p-4 rounded-2xl bg-dark-800/50 border border-dark-700/50">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-8 h-8 rounded-full bg-success-500/20 flex items-center justify-center text-sm font-bold text-success-400">3</div>
-                  <h3 className="font-medium text-dark-100">{t('subscription.connection.connectVpn')}</h3>
-                </div>
-                <p className="text-sm text-dark-400 pl-11">
-                  {getLocalizedText(selectedApp.connectAndUseStep.description)}
-                </p>
-              </div>
-            )}
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto px-4 pb-2">
+            {instructionsContent}
           </div>
-        </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-dark-800 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-4">
-          <button onClick={onClose} className="btn-secondary w-full">
-            {t('common.close')}
-          </button>
+          {/* Footer */}
+          <div className="p-4 border-t border-dark-800" style={{ paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}>
+            <button onClick={onClose} className="btn-secondary w-full">
+              {t('common.close')}
+            </button>
+          </div>
         </div>
       </div>
     </div>
