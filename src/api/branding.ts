@@ -7,6 +7,70 @@ export interface BrandingInfo {
   has_custom_logo: boolean
 }
 
+export interface AnimationEnabled {
+  enabled: boolean
+}
+
+const BRANDING_CACHE_KEY = 'cabinet_branding'
+const LOGO_PRELOADED_KEY = 'cabinet_logo_preloaded'
+
+// Get cached branding from localStorage
+export const getCachedBranding = (): BrandingInfo | null => {
+  try {
+    const cached = localStorage.getItem(BRANDING_CACHE_KEY)
+    if (cached) {
+      return JSON.parse(cached)
+    }
+  } catch {
+    // localStorage not available or invalid JSON
+  }
+  return null
+}
+
+// Update branding cache in localStorage
+export const setCachedBranding = (branding: BrandingInfo) => {
+  try {
+    localStorage.setItem(BRANDING_CACHE_KEY, JSON.stringify(branding))
+  } catch {
+    // localStorage not available
+  }
+}
+
+// Preload logo image for instant display
+export const preloadLogo = (branding: BrandingInfo): Promise<void> => {
+  return new Promise((resolve) => {
+    if (!branding.has_custom_logo || !branding.logo_url) {
+      resolve()
+      return
+    }
+
+    const logoUrl = `${import.meta.env.VITE_API_URL || ''}${branding.logo_url}`
+
+    // Check if already preloaded in this session
+    const preloaded = sessionStorage.getItem(LOGO_PRELOADED_KEY)
+    if (preloaded === logoUrl) {
+      resolve()
+      return
+    }
+
+    const img = new Image()
+    img.onload = () => {
+      sessionStorage.setItem(LOGO_PRELOADED_KEY, logoUrl)
+      resolve()
+    }
+    img.onerror = () => resolve()
+    img.src = logoUrl
+  })
+}
+
+// Initialize logo preload from cache on page load
+export const initLogoPreload = () => {
+  const cached = getCachedBranding()
+  if (cached) {
+    preloadLogo(cached)
+  }
+}
+
 export const brandingApi = {
   // Get current branding (public, no auth required)
   getBranding: async (): Promise<BrandingInfo> => {
@@ -44,5 +108,17 @@ export const brandingApi = {
       return null
     }
     return `${import.meta.env.VITE_API_URL || ''}${branding.logo_url}`
+  },
+
+  // Get animation enabled (public, no auth required)
+  getAnimationEnabled: async (): Promise<AnimationEnabled> => {
+    const response = await apiClient.get<AnimationEnabled>('/cabinet/branding/animation')
+    return response.data
+  },
+
+  // Update animation enabled (admin only)
+  updateAnimationEnabled: async (enabled: boolean): Promise<AnimationEnabled> => {
+    const response = await apiClient.patch<AnimationEnabled>('/cabinet/branding/animation', { enabled })
+    return response.data
   },
 }

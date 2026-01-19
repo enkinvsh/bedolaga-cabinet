@@ -6,12 +6,15 @@ import { useAuthStore } from '../../store/auth'
 import LanguageSwitcher from '../LanguageSwitcher'
 import PromoDiscountBadge from '../PromoDiscountBadge'
 import TicketNotificationBell from '../TicketNotificationBell'
+import AnimatedBackground from '../AnimatedBackground'
 import { contestsApi } from '../../api/contests'
 import { pollsApi } from '../../api/polls'
-import { brandingApi } from '../../api/branding'
+import { brandingApi, getCachedBranding, setCachedBranding, preloadLogo } from '../../api/branding'
 import { wheelApi } from '../../api/wheel'
 import { themeColorsApi } from '../../api/themeColors'
+import { promoApi } from '../../api/promo'
 import { useTheme } from '../../hooks/useTheme'
+import { useTelegramWebApp } from '../../hooks/useTelegramWebApp'
 
 // Fallback branding from environment variables
 const FALLBACK_NAME = import.meta.env.VITE_APP_NAME || 'Cabinet'
@@ -120,6 +123,18 @@ const WheelIcon = () => (
   </svg>
 )
 
+const FullscreenIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+  </svg>
+)
+
+const ExitFullscreenIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />
+  </svg>
+)
+
 export default function Layout({ children }: LayoutProps) {
   const { t } = useTranslation()
   const location = useLocation()
@@ -127,6 +142,7 @@ export default function Layout({ children }: LayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { toggleTheme, isDark } = useTheme()
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null)
+  const { isTelegramWebApp, isFullscreen, isFullscreenSupported, toggleFullscreen, safeAreaInset, contentSafeAreaInset } = useTelegramWebApp()
 
   // Fetch enabled themes from API - same source of truth as AdminSettings
   const { data: enabledThemes } = useQuery({
@@ -165,15 +181,26 @@ export default function Layout({ children }: LayoutProps) {
     }
   }, [mobileMenuOpen])
 
-  // Fetch branding settings
+  // State to track if logo image has loaded
+  const [logoLoaded, setLogoLoaded] = useState(false)
+
+  // Fetch branding settings with localStorage cache for instant load
   const { data: branding } = useQuery({
     queryKey: ['branding'],
-    queryFn: brandingApi.getBranding,
+    queryFn: async () => {
+      const data = await brandingApi.getBranding()
+      setCachedBranding(data) // Update cache
+      // Preload logo in background
+      preloadLogo(data)
+      return data
+    },
+    initialData: getCachedBranding() ?? undefined, // Use cached data immediately
     staleTime: 60000, // 1 minute
+    refetchOnWindowFocus: true,
     retry: 1,
   })
 
-  // Computed branding values - use fallback only if branding not loaded yet
+  // Computed branding values - use fallback only if no branding and no cache
   const appName = branding ? branding.name : FALLBACK_NAME  // Empty string is valid (logo-only mode)
   const logoLetter = branding?.logo_letter || FALLBACK_LOGO
   const hasCustomLogo = branding?.has_custom_logo || false
@@ -209,6 +236,17 @@ export default function Layout({ children }: LayoutProps) {
     staleTime: 60000, // 1 minute
     retry: false,
   })
+
+  // Fetch active discount to determine mobile layout
+  const { data: activeDiscount } = useQuery({
+    queryKey: ['active-discount'],
+    queryFn: promoApi.getActiveDiscount,
+    enabled: isAuthenticated,
+    staleTime: 30000,
+  })
+
+  // Check if promo is active (to hide language switcher on mobile)
+  const isPromoActive = activeDiscount?.is_active && activeDiscount?.discount_percent
 
   const navItems = useMemo(() => {
     const items = [
@@ -258,17 +296,34 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Animated Background */}
+      <AnimatedBackground />
+
       {/* Header */}
-      <header className="sticky top-0 z-50 glass border-b border-dark-800/50">
+      <header
+        className="sticky top-0 z-50 glass border-b border-dark-800/50"
+        style={{
+          // In fullscreen mode, add padding for safe area + Telegram native controls (close/menu buttons in corners)
+          paddingTop: isFullscreen ? `${Math.max(safeAreaInset.top, contentSafeAreaInset.top) + 45}px` : undefined,
+        }}
+      >
         <div className="w-full mx-auto px-4 sm:px-6">
           <div className="flex justify-between items-center h-16 lg:h-20">
             {/* Logo */}
             <Link to="/" className={`flex items-center gap-2.5 flex-shrink-0 ${!appName ? 'lg:mr-4' : ''}`}>
-              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center overflow-hidden shadow-lg shadow-accent-500/20 flex-shrink-0">
-                {hasCustomLogo && logoUrl ? (
-                  <img src={logoUrl} alt={appName || 'Logo'} className="w-full h-full object-contain" />
-                ) : (
-                  <span className="text-white font-bold text-lg sm:text-xl lg:text-2xl">{logoLetter}</span>
+              <div className="w-10 h-10 sm:w-12 sm:h-12 lg:w-14 lg:h-14 rounded-xl bg-gradient-to-br from-accent-400 to-accent-600 flex items-center justify-center overflow-hidden shadow-lg shadow-accent-500/20 flex-shrink-0 relative">
+                {/* Always show letter as fallback */}
+                <span className={`text-white font-bold text-lg sm:text-xl lg:text-2xl absolute transition-opacity duration-200 ${hasCustomLogo && logoLoaded ? 'opacity-0' : 'opacity-100'}`}>
+                  {logoLetter}
+                </span>
+                {/* Logo image with smooth fade-in */}
+                {hasCustomLogo && logoUrl && (
+                  <img
+                    src={logoUrl}
+                    alt={appName || 'Logo'}
+                    className={`w-full h-full object-contain absolute transition-opacity duration-200 ${logoLoaded ? 'opacity-100' : 'opacity-0'}`}
+                    onLoad={() => setLogoLoaded(true)}
+                  />
                 )}
               </div>
               {appName && (
@@ -317,6 +372,20 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Right side */}
             <div className="flex items-center gap-2 sm:gap-3">
+              {/* Fullscreen toggle - only show in Telegram WebApp */}
+              {isTelegramWebApp && isFullscreenSupported && (
+                <button
+                  onClick={toggleFullscreen}
+                  className="relative p-2.5 rounded-xl transition-all duration-300 hover:scale-110 active:scale-95
+                             dark:text-dark-400 dark:hover:text-dark-100 dark:hover:bg-dark-800
+                             text-champagne-500 hover:text-champagne-800 hover:bg-champagne-200/50"
+                  title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                  aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+                >
+                  {isFullscreen ? <ExitFullscreenIcon /> : <FullscreenIcon />}
+                </button>
+              )}
+
               {/* Theme toggle button - only show if both themes are enabled */}
               {canToggle && (
                 <button
@@ -325,6 +394,7 @@ export default function Layout({ children }: LayoutProps) {
                              dark:text-dark-400 dark:hover:text-dark-100 dark:hover:bg-dark-800
                              text-champagne-500 hover:text-champagne-800 hover:bg-champagne-200/50"
                   title={isDark ? t('theme.light') || 'Light mode' : t('theme.dark') || 'Dark mode'}
+                  aria-label={isDark ? t('theme.light') || 'Switch to light mode' : t('theme.dark') || 'Switch to dark mode'}
                 >
                   <div className="relative w-5 h-5">
                     <div className={`absolute inset-0 transition-all duration-300 ${isDark ? 'opacity-100 rotate-0' : 'opacity-0 rotate-90'}`}>
@@ -339,7 +409,10 @@ export default function Layout({ children }: LayoutProps) {
 
               <PromoDiscountBadge />
               <TicketNotificationBell isAdmin={isAdminActive()} />
-              <LanguageSwitcher />
+              {/* Hide language switcher on mobile when promo is active */}
+              <div className={isPromoActive ? 'hidden sm:block' : ''}>
+                <LanguageSwitcher />
+              </div>
 
               {/* Profile - Desktop */}
               <div className="hidden sm:flex items-center gap-3">
@@ -358,6 +431,7 @@ export default function Layout({ children }: LayoutProps) {
                   onClick={logout}
                   className="btn-icon"
                   title={t('nav.logout')}
+                  aria-label={t('nav.logout') || 'Logout'}
                 >
                   <LogoutIcon />
                 </button>
@@ -367,6 +441,8 @@ export default function Layout({ children }: LayoutProps) {
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className="lg:hidden btn-icon"
+                aria-label={mobileMenuOpen ? t('common.close') || 'Close menu' : t('nav.menu') || 'Open menu'}
+                aria-expanded={mobileMenuOpen}
               >
                 {mobileMenuOpen ? <CloseIcon /> : <MenuIcon />}
               </button>
@@ -389,29 +465,33 @@ export default function Layout({ children }: LayoutProps) {
           <div className="absolute inset-x-0 top-0 bottom-0 bg-dark-900 border-t border-dark-800/50 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
             <div className="max-w-6xl mx-auto px-4 py-4">
               {/* User info */}
-              <div className="flex items-center gap-3 pb-4 mb-4 border-b border-dark-800/50">
-                {userPhotoUrl ? (
-                  <img
-                    src={userPhotoUrl}
-                    alt="Avatar"
-                    className="w-10 h-10 rounded-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.style.display = 'none'
-                      e.currentTarget.nextElementSibling?.classList.remove('hidden')
-                    }}
-                  />
-                ) : null}
-                <div className={`w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center ${userPhotoUrl ? 'hidden' : ''}`}>
-                  <UserIcon />
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-dark-100">
-                    {user?.first_name || user?.username}
+              <div className="flex items-center justify-between pb-4 mb-4 border-b border-dark-800/50">
+                <div className="flex items-center gap-3">
+                  {userPhotoUrl ? (
+                    <img
+                      src={userPhotoUrl}
+                      alt="Avatar"
+                      className="w-10 h-10 rounded-full object-cover"
+                      onError={(e) => {
+                        e.currentTarget.style.display = 'none'
+                        e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-10 h-10 rounded-full bg-dark-700 flex items-center justify-center ${userPhotoUrl ? 'hidden' : ''}`}>
+                    <UserIcon />
                   </div>
-                  <div className="text-xs text-dark-500">
-                    @{user?.username || `ID: ${user?.telegram_id}`}
+                  <div>
+                    <div className="text-sm font-medium text-dark-100">
+                      {user?.first_name || user?.username}
+                    </div>
+                    <div className="text-xs text-dark-500">
+                      @{user?.username || `ID: ${user?.telegram_id}`}
+                    </div>
                   </div>
                 </div>
+                {/* Language switcher in mobile menu when promo is active */}
+                {isPromoActive && <LanguageSwitcher />}
               </div>
 
               {/* Nav items */}
@@ -480,6 +560,7 @@ export default function Layout({ children }: LayoutProps) {
         <div className="animate-fade-in">
           {children}
         </div>
+
       </main>
 
       {/* Mobile Bottom Navigation - only core items */}

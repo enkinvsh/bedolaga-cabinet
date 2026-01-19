@@ -318,7 +318,7 @@ export default function Support() {
             if (webApp?.openLink) {
               log.debug('Using openLink')
               try {
-                webApp.openLink(webUrl)
+                webApp.openLink(webUrl, { try_browser: true })
                 return
               } catch (e) {
                 log.error('openLink failed:', e)
@@ -340,7 +340,7 @@ export default function Support() {
           buttonAction: () => {
             const webApp = window.Telegram?.WebApp
             if (webApp?.openLink) {
-              webApp.openLink(supportConfig.support_url!)
+              webApp.openLink(supportConfig.support_url!, { try_browser: true })
             } else {
               window.open(supportConfig.support_url!, '_blank')
             }
@@ -372,7 +372,7 @@ export default function Support() {
             webApp.openTelegramLink(webUrl)
           } else if (webApp?.openLink) {
             log.debug('Fallback using openLink')
-            webApp.openLink(webUrl)
+            webApp.openLink(webUrl, { try_browser: true })
           } else {
             log.debug('Fallback using window.open')
             window.open(webUrl, '_blank')

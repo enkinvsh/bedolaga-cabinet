@@ -17,7 +17,8 @@ const openPaymentLink = (url: string, reservedWindow?: Window | null) => {
     try { webApp.openTelegramLink(url); return } catch (e) { console.warn('[TopUpModal] openTelegramLink failed:', e) }
   }
   if (webApp?.openLink) {
-    try { webApp.openLink(url, { try_instant_view: false }); return } catch (e) { console.warn('[TopUpModal] webApp.openLink failed:', e) }
+    // try_browser: true - открывает диалог для перехода во внешний браузер (важно для мобильных)
+    try { webApp.openLink(url, { try_instant_view: false, try_browser: true }); return } catch (e) { console.warn('[TopUpModal] webApp.openLink failed:', e) }
   }
   if (reservedWindow && !reservedWindow.closed) {
     try { reservedWindow.location.href = url; reservedWindow.focus?.() } catch (e) { console.warn('[TopUpModal] Failed to use reserved window:', e) }

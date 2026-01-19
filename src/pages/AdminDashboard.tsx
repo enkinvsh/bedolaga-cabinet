@@ -1,10 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { statsApi, type DashboardStats, type NodeStatus } from '../api/admin'
+import {
+  statsApi,
+  type DashboardStats,
+  type NodeStatus,
+  type TopReferrersResponse,
+  type TopCampaignsResponse,
+  type RecentPaymentsResponse
+} from '../api/admin'
 import { useCurrency } from '../hooks/useCurrency'
 
-// Icons
+// Icons - styled like main navigation
 const BackIcon = () => (
   <svg className="w-5 h-5 text-dark-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
@@ -12,26 +19,39 @@ const BackIcon = () => (
 )
 
 const ServerIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 14.25h13.5m-13.5 0a3 3 0 01-3-3m3 3a3 3 0 100 6h13.5a3 3 0 100-6m-16.5-3a3 3 0 013-3h13.5a3 3 0 013 3m-19.5 0a4.5 4.5 0 01.9-2.7L5.737 5.1a3.375 3.375 0 012.7-1.35h7.126c1.062 0 2.062.5 2.7 1.35l2.587 3.45a4.5 4.5 0 01.9 2.7m0 0a3 3 0 01-3 3m0 3h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008zm-3 6h.008v.008h-.008v-.008zm0-6h.008v.008h-.008v-.008z" />
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 17.25v-.228a4.5 4.5 0 00-.12-1.03l-2.268-9.64a3.375 3.375 0 00-3.285-2.602H7.923a3.375 3.375 0 00-3.285 2.602l-2.268 9.64a4.5 4.5 0 00-.12 1.03v.228m19.5 0a3 3 0 01-3 3H5.25a3 3 0 01-3-3m19.5 0a3 3 0 00-3-3H5.25a3 3 0 00-3 3m16.5 0h.008v.008h-.008v-.008zm-3 0h.008v.008h-.008v-.008z" />
   </svg>
 )
 
-const UsersIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+const UsersOnlineIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
   </svg>
 )
 
-const CurrencyIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+const WalletIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
   </svg>
 )
 
-const SubscriptionIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+const ChartBarIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+  </svg>
+)
+
+const SparklesIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+  </svg>
+)
+
+const TagIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
   </svg>
 )
 
@@ -50,6 +70,36 @@ const PowerIcon = () => (
 const RestartIcon = () => (
   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+  </svg>
+)
+
+const ChevronDownIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+  </svg>
+)
+
+const UsersIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+  </svg>
+)
+
+const MegaphoneIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46" />
+  </svg>
+)
+
+const BanknotesIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0115.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 013 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 00-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 01-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 003 15h-.75M15 10.5a3 3 0 11-6 0 3 3 0 016 0zm3 0h.008v.008H18V10.5zm-12 0h.008v.008H6V10.5z" />
+  </svg>
+)
+
+const ExclamationIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
   </svg>
 )
 
@@ -122,6 +172,8 @@ function NodeCard({ node, onRestart, onToggle, isLoading }: NodeCardProps) {
     return `${gb.toFixed(1)} GB`
   }
 
+  const hasError = node.last_status_message && !node.is_connected
+
   return (
     <div className={`bg-dark-800/50 backdrop-blur rounded-xl border ${node.is_disabled ? 'border-dark-700' : node.is_connected ? 'border-success-500/30' : 'border-error-500/30'} p-4 hover:border-dark-600 transition-colors`}>
       <div className="flex items-start justify-between mb-3">
@@ -136,6 +188,32 @@ function NodeCard({ node, onRestart, onToggle, isLoading }: NodeCardProps) {
           {getStatusText()}
         </span>
       </div>
+
+      {/* Xray Version & Uptime */}
+      {(node.xray_version || node.xray_uptime) && (
+        <div className="flex items-center gap-3 mb-3 text-xs">
+          {node.xray_version && (
+            <span className="px-2 py-1 rounded bg-dark-700/50 text-dark-300">
+              Xray {node.xray_version}
+            </span>
+          )}
+          {node.xray_uptime && (
+            <span className="text-dark-500">
+              Uptime: {node.xray_uptime}
+            </span>
+          )}
+        </div>
+      )}
+
+      {/* Error Message */}
+      {hasError && (
+        <div className="mb-3 p-2 rounded-lg bg-error-500/10 border border-error-500/20">
+          <div className="flex items-start gap-2">
+            <ExclamationIcon />
+            <span className="text-xs text-error-400 break-all">{node.last_status_message}</span>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-3 mb-3">
         <div className="bg-dark-900/50 rounded-lg p-2.5">
@@ -190,14 +268,14 @@ function RevenueChart({ data }: { data: { date: string; amount_rubles: number }[
 
   return (
     <div className="space-y-3">
-      {last7Days.map((item, index) => {
+      {last7Days.map((item) => {
         const percentage = (item.amount_rubles / maxValue) * 100
         const date = new Date(item.date)
         const dayName = date.toLocaleDateString('ru-RU', { weekday: 'short' })
         const dayNum = date.getDate()
 
         return (
-          <div key={index} className="group">
+          <div key={item.date} className="group">
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm text-dark-300 font-medium capitalize">{dayName}, {dayNum}</span>
               <span className="text-sm font-semibold text-dark-100">{formatAmount(item.amount_rubles)} {currencySymbol}</span>
@@ -222,6 +300,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [actionLoading, setActionLoading] = useState<string | null>(null)
+  const [showAllNodes, setShowAllNodes] = useState(false)
+
+  // Extended stats
+  const [referrers, setReferrers] = useState<TopReferrersResponse | null>(null)
+  const [campaigns, setCampaigns] = useState<TopCampaignsResponse | null>(null)
+  const [payments, setPayments] = useState<RecentPaymentsResponse | null>(null)
+  const [referrersTab, setReferrersTab] = useState<'earnings' | 'invited'>('earnings')
 
   const fetchStats = async () => {
     try {
@@ -237,10 +322,29 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchExtendedStats = async () => {
+    try {
+      const [referrersData, campaignsData, paymentsData] = await Promise.all([
+        statsApi.getTopReferrers(10),
+        statsApi.getTopCampaigns(10),
+        statsApi.getRecentPayments(20),
+      ])
+      setReferrers(referrersData)
+      setCampaigns(campaignsData)
+      setPayments(paymentsData)
+    } catch (err) {
+      console.error('Failed to load extended stats:', err)
+    }
+  }
+
   useEffect(() => {
     fetchStats()
+    fetchExtendedStats()
     // Refresh every 30 seconds
-    const interval = setInterval(fetchStats, 30000)
+    const interval = setInterval(() => {
+      fetchStats()
+      fetchExtendedStats()
+    }, 30000)
     return () => clearInterval(interval)
   }, [])
 
@@ -319,26 +423,26 @@ export default function AdminDashboard() {
         <StatCard
           title={t('adminDashboard.stats.usersOnline')}
           value={stats?.nodes.total_users_online || 0}
-          icon={<UsersIcon />}
+          icon={<UsersOnlineIcon />}
           color="success"
         />
         <StatCard
           title={t('adminDashboard.stats.activeSubscriptions')}
           value={stats?.subscriptions.active || 0}
           subtitle={`${t('adminDashboard.stats.total')}: ${stats?.subscriptions.total || 0}`}
-          icon={<SubscriptionIcon />}
+          icon={<SparklesIcon />}
           color="accent"
         />
         <StatCard
           title={t('adminDashboard.stats.incomeToday')}
           value={`${formatAmount(stats?.financial.income_today_rubles || 0)} ${currencySymbol}`}
-          icon={<CurrencyIcon />}
+          icon={<WalletIcon />}
           color="warning"
         />
         <StatCard
           title={t('adminDashboard.stats.incomeMonth')}
           value={`${formatAmount(stats?.financial.income_month_rubles || 0)} ${currencySymbol}`}
-          icon={<CurrencyIcon />}
+          icon={<ChartBarIcon />}
           color="info"
         />
       </div>
@@ -347,7 +451,9 @@ export default function AdminDashboard() {
       <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-5">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <ServerIcon />
+            <div className="p-2.5 rounded-lg bg-accent-500/20 text-accent-400">
+              <ServerIcon />
+            </div>
             <div>
               <h2 className="text-lg font-semibold text-dark-100">{t('adminDashboard.nodes.title')}</h2>
               <p className="text-sm text-dark-400">
@@ -372,17 +478,33 @@ export default function AdminDashboard() {
         </div>
 
         {stats?.nodes.nodes && stats.nodes.nodes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {stats.nodes.nodes.map((node) => (
-              <NodeCard
-                key={node.uuid}
-                node={node}
-                onRestart={handleRestartNode}
-                onToggle={handleToggleNode}
-                isLoading={actionLoading === node.uuid}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(showAllNodes ? stats.nodes.nodes : stats.nodes.nodes.slice(0, 3)).map((node) => (
+                <NodeCard
+                  key={node.uuid}
+                  node={node}
+                  onRestart={handleRestartNode}
+                  onToggle={handleToggleNode}
+                  isLoading={actionLoading === node.uuid}
+                />
+              ))}
+            </div>
+            {stats.nodes.nodes.length > 3 && (
+              <button
+                onClick={() => setShowAllNodes(!showAllNodes)}
+                className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg bg-dark-700/50 text-dark-300 hover:text-dark-100 hover:bg-dark-700 transition-colors"
+              >
+                <span className={`transform transition-transform ${showAllNodes ? 'rotate-180' : ''}`}>
+                  <ChevronDownIcon />
+                </span>
+                {showAllNodes
+                  ? `Скрыть (${stats.nodes.nodes.length - 3})`
+                  : `Показать еще ${stats.nodes.nodes.length - 3} нод`
+                }
+              </button>
+            )}
+          </>
         ) : (
           <div className="text-center py-8 text-dark-500">
             {t('adminDashboard.nodes.noNodes')}
@@ -395,7 +517,9 @@ export default function AdminDashboard() {
         {/* Revenue Chart */}
         <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-5">
           <div className="flex items-center gap-3 mb-4">
-            <CurrencyIcon />
+            <div className="p-2.5 rounded-lg bg-warning-500/20 text-warning-400">
+              <ChartBarIcon />
+            </div>
             <div>
               <h2 className="text-lg font-semibold text-dark-100">{t('adminDashboard.revenue.title')}</h2>
               <p className="text-sm text-dark-400">{t('adminDashboard.revenue.last7Days')}</p>
@@ -417,7 +541,9 @@ export default function AdminDashboard() {
         {/* Subscription Stats */}
         <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-5">
           <div className="flex items-center gap-3 mb-4">
-            <SubscriptionIcon />
+            <div className="p-2.5 rounded-lg bg-accent-500/20 text-accent-400">
+              <SparklesIcon />
+            </div>
             <div>
               <h2 className="text-lg font-semibold text-dark-100">{t('adminDashboard.subscriptions.title')}</h2>
               <p className="text-sm text-dark-400">{t('adminDashboard.subscriptions.subtitle')}</p>
@@ -474,39 +600,13 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Server Stats */}
-      {stats?.servers && (
-        <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-5">
-          <div className="flex items-center gap-3 mb-4">
-            <ServerIcon />
-            <h2 className="text-lg font-semibold text-dark-100">{t('adminDashboard.servers.title')}</h2>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-dark-900/50 rounded-lg p-4">
-              <div className="text-xs text-dark-500 mb-1">{t('adminDashboard.servers.total')}</div>
-              <div className="text-2xl font-bold text-dark-100">{stats.servers.total_servers}</div>
-            </div>
-            <div className="bg-dark-900/50 rounded-lg p-4">
-              <div className="text-xs text-dark-500 mb-1">{t('adminDashboard.servers.available')}</div>
-              <div className="text-2xl font-bold text-success-400">{stats.servers.available_servers}</div>
-            </div>
-            <div className="bg-dark-900/50 rounded-lg p-4">
-              <div className="text-xs text-dark-500 mb-1">{t('adminDashboard.servers.withConnections')}</div>
-              <div className="text-2xl font-bold text-accent-400">{stats.servers.servers_with_connections}</div>
-            </div>
-            <div className="bg-dark-900/50 rounded-lg p-4">
-              <div className="text-xs text-dark-500 mb-1">{t('adminDashboard.servers.revenue')}</div>
-              <div className="text-2xl font-bold text-warning-400">{formatAmount(stats.servers.total_revenue_rubles)} {currencySymbol}</div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Tariff Stats */}
       {stats?.tariff_stats && stats.tariff_stats.tariffs.length > 0 && (
         <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-5">
           <div className="flex items-center gap-3 mb-4">
-            <SubscriptionIcon />
+            <div className="p-2.5 rounded-lg bg-success-500/20 text-success-400">
+              <TagIcon />
+            </div>
             <div>
               <h2 className="text-lg font-semibold text-dark-100">{t('adminDashboard.tariffs.title')}</h2>
               <p className="text-sm text-dark-400">{t('adminDashboard.tariffs.subtitle')}</p>
@@ -550,6 +650,262 @@ export default function AdminDashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Extended Stats Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Referrers */}
+        {referrers && (referrers.by_earnings.length > 0 || referrers.by_invited.length > 0) && (
+          <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-2 sm:p-2.5 rounded-lg bg-accent-500/20 text-accent-400">
+                  <UsersIcon />
+                </div>
+                <div>
+                  <h2 className="text-base sm:text-lg font-semibold text-dark-100">Топ рефералов</h2>
+                  <p className="text-xs sm:text-sm text-dark-400">
+                    {referrers.total_referrers} реф., {referrers.total_referrals} пригл.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setReferrersTab('earnings')}
+                className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                  referrersTab === 'earnings'
+                    ? 'bg-accent-500/20 text-accent-400'
+                    : 'bg-dark-700/50 text-dark-400 hover:text-dark-200'
+                }`}
+              >
+                По доходу
+              </button>
+              <button
+                onClick={() => setReferrersTab('invited')}
+                className={`px-2 sm:px-3 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors ${
+                  referrersTab === 'invited'
+                    ? 'bg-accent-500/20 text-accent-400'
+                    : 'bg-dark-700/50 text-dark-400 hover:text-dark-200'
+                }`}
+              >
+                По пригл.
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {(referrersTab === 'earnings' ? referrers.by_earnings : referrers.by_invited).slice(0, 5).map((ref, idx) => (
+                <div key={ref.user_id} className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-dark-900/50 hover:bg-dark-800/50 transition-colors gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <span className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 flex items-center justify-center rounded-full bg-dark-700 text-[10px] sm:text-xs font-bold text-dark-300">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-medium text-dark-100 text-xs sm:text-sm truncate">{ref.display_name}</div>
+                      {ref.username && <div className="text-[10px] sm:text-xs text-dark-500 truncate">@{ref.username}</div>}
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    {referrersTab === 'earnings' ? (
+                      <>
+                        <div className="font-semibold text-success-400 text-xs sm:text-sm">{formatAmount(ref.earnings_total_kopeks / 100)} {currencySymbol}</div>
+                        <div className="text-[10px] sm:text-xs text-dark-500">{ref.invited_count} пригл.</div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="font-semibold text-accent-400 text-xs sm:text-sm">{ref.invited_count} чел.</div>
+                        <div className="text-[10px] sm:text-xs text-dark-500">{formatAmount(ref.earnings_total_kopeks / 100)} {currencySymbol}</div>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Period Stats */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-3 mt-4 pt-4 border-t border-dark-700">
+              <div className="text-center">
+                <div className="text-[10px] sm:text-xs text-dark-500 mb-1">Сегодня</div>
+                <div className="font-semibold text-dark-200 text-xs sm:text-base truncate">
+                  {formatAmount(
+                    (referrersTab === 'earnings' ? referrers.by_earnings : referrers.by_invited)
+                      .reduce((sum, r) => sum + r.earnings_today_kopeks, 0) / 100
+                  )} {currencySymbol}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] sm:text-xs text-dark-500 mb-1">Неделя</div>
+                <div className="font-semibold text-dark-200 text-xs sm:text-base truncate">
+                  {formatAmount(
+                    (referrersTab === 'earnings' ? referrers.by_earnings : referrers.by_invited)
+                      .reduce((sum, r) => sum + r.earnings_week_kopeks, 0) / 100
+                  )} {currencySymbol}
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="text-[10px] sm:text-xs text-dark-500 mb-1">Месяц</div>
+                <div className="font-semibold text-dark-200 text-xs sm:text-base truncate">
+                  {formatAmount(
+                    (referrersTab === 'earnings' ? referrers.by_earnings : referrers.by_invited)
+                      .reduce((sum, r) => sum + r.earnings_month_kopeks, 0) / 100
+                  )} {currencySymbol}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Top Campaigns */}
+        {campaigns && campaigns.campaigns.length > 0 && (
+          <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-4 sm:p-5">
+            <div className="flex items-center gap-2 sm:gap-3 mb-4">
+              <div className="p-2 sm:p-2.5 rounded-lg bg-warning-500/20 text-warning-400">
+                <MegaphoneIcon />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-dark-100">Топ РК ссылок</h2>
+                <p className="text-xs sm:text-sm text-dark-400">
+                  {campaigns.total_campaigns} камп., {campaigns.total_registrations} рег.
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {campaigns.campaigns.slice(0, 5).map((campaign, idx) => (
+                <div key={campaign.id} className="flex items-center justify-between p-2 sm:p-3 rounded-lg bg-dark-900/50 hover:bg-dark-800/50 transition-colors gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                    <span className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0 flex items-center justify-center rounded-full bg-dark-700 text-[10px] sm:text-xs font-bold text-dark-300">
+                      {idx + 1}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="font-medium text-dark-100 text-xs sm:text-sm truncate">{campaign.name}</div>
+                      <div className="text-[10px] sm:text-xs text-dark-500 truncate">?start={campaign.start_parameter}</div>
+                    </div>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <div className="font-semibold text-warning-400 text-xs sm:text-sm">{formatAmount(campaign.total_revenue_kopeks / 100)} {currencySymbol}</div>
+                    <div className="text-[10px] sm:text-xs text-dark-500">
+                      {campaign.registrations} · {campaign.conversion_rate.toFixed(0)}%
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-dark-700">
+              <div className="flex justify-between items-center">
+                <span className="text-xs sm:text-sm text-dark-400">Всего от РК</span>
+                <span className="font-bold text-warning-400 text-sm sm:text-base">{formatAmount(campaigns.total_revenue_kopeks / 100)} {currencySymbol}</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Payments */}
+      {payments && payments.payments.length > 0 && (
+        <div className="bg-dark-800/30 backdrop-blur rounded-xl border border-dark-700 p-4 sm:p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 sm:p-2.5 rounded-lg bg-success-500/20 text-success-400">
+                <BanknotesIcon />
+              </div>
+              <div>
+                <h2 className="text-base sm:text-lg font-semibold text-dark-100">Последние платежи</h2>
+                <p className="text-xs sm:text-sm text-dark-400">
+                  Сегодня: {formatAmount(payments.total_today_kopeks / 100)} {currencySymbol}
+                  <span className="hidden sm:inline"> · За неделю: {formatAmount(payments.total_week_kopeks / 100)} {currencySymbol}</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-dark-700">
+                  <th className="text-left text-xs text-dark-500 font-medium py-3 px-2">Пользователь</th>
+                  <th className="text-left text-xs text-dark-500 font-medium py-3 px-2">Тип</th>
+                  <th className="text-right text-xs text-dark-500 font-medium py-3 px-2">Сумма</th>
+                  <th className="text-left text-xs text-dark-500 font-medium py-3 px-2">Метод</th>
+                  <th className="text-right text-xs text-dark-500 font-medium py-3 px-2">Дата</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payments.payments.slice(0, 10).map((payment) => (
+                  <tr key={payment.id} className="border-b border-dark-700/50 hover:bg-dark-800/50 transition-colors">
+                    <td className="py-3 px-2">
+                      <div className="font-medium text-dark-100 text-sm">{payment.display_name}</div>
+                      {payment.username && <div className="text-xs text-dark-500">@{payment.username}</div>}
+                    </td>
+                    <td className="py-3 px-2">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        payment.type === 'deposit'
+                          ? 'bg-success-500/20 text-success-400'
+                          : 'bg-accent-500/20 text-accent-400'
+                      }`}>
+                        {payment.type_display}
+                      </span>
+                    </td>
+                    <td className="py-3 px-2 text-right">
+                      <span className="font-semibold text-dark-100">{formatAmount(payment.amount_rubles)} {currencySymbol}</span>
+                    </td>
+                    <td className="py-3 px-2">
+                      <span className="text-xs text-dark-400">{payment.payment_method || '-'}</span>
+                    </td>
+                    <td className="py-3 px-2 text-right">
+                      <span className="text-xs text-dark-400">
+                        {new Date(payment.created_at).toLocaleString('ru-RU', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-2">
+            {payments.payments.slice(0, 10).map((payment) => (
+              <div key={payment.id} className="p-3 rounded-lg bg-dark-900/50">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full whitespace-nowrap ${
+                      payment.type === 'deposit'
+                        ? 'bg-success-500/20 text-success-400'
+                        : 'bg-accent-500/20 text-accent-400'
+                    }`}>
+                      {payment.type_display}
+                    </span>
+                    <span className="font-medium text-dark-100 text-sm truncate">{payment.display_name}</span>
+                  </div>
+                  <span className="font-semibold text-dark-100 text-sm whitespace-nowrap ml-2">
+                    {formatAmount(payment.amount_rubles)} {currencySymbol}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-xs text-dark-500">
+                  <span>{payment.payment_method || '-'}</span>
+                  <span>
+                    {new Date(payment.created_at).toLocaleString('ru-RU', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

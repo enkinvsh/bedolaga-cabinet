@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import { adminSettingsApi, SettingDefinition, SettingCategorySummary } from '../api/adminSettings'
-import { brandingApi } from '../api/branding'
+import { brandingApi, setCachedBranding } from '../api/branding'
+import { setCachedAnimationEnabled } from '../components/AnimatedBackground'
 import { themeColorsApi } from '../api/themeColors'
 import { DEFAULT_THEME_COLORS, DEFAULT_ENABLED_THEMES } from '../types/theme'
 import { ColorPicker } from '../components/ColorPicker'
@@ -864,9 +865,25 @@ export default function AdminSettings() {
     queryFn: brandingApi.getBranding,
   })
 
+  // Animation toggle query and mutation
+  const { data: animationSettings } = useQuery({
+    queryKey: ['animation-enabled'],
+    queryFn: brandingApi.getAnimationEnabled,
+  })
+
+  const updateAnimationMutation = useMutation({
+    mutationFn: (enabled: boolean) => brandingApi.updateAnimationEnabled(enabled),
+    onSuccess: (data) => {
+      // Update local cache immediately for instant effect
+      setCachedAnimationEnabled(data.enabled)
+      queryClient.invalidateQueries({ queryKey: ['animation-enabled'] })
+    },
+  })
+
   const updateNameMutation = useMutation({
     mutationFn: (name: string) => brandingApi.updateName(name),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setCachedBranding(data) // Update cache immediately
       queryClient.invalidateQueries({ queryKey: ['branding'] })
       setEditingName(false)
     },
@@ -874,14 +891,16 @@ export default function AdminSettings() {
 
   const uploadLogoMutation = useMutation({
     mutationFn: (file: File) => brandingApi.uploadLogo(file),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setCachedBranding(data) // Update cache immediately
       queryClient.invalidateQueries({ queryKey: ['branding'] })
     },
   })
 
   const deleteLogoMutation = useMutation({
     mutationFn: () => brandingApi.deleteLogo(),
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setCachedBranding(data) // Update cache immediately
       queryClient.invalidateQueries({ queryKey: ['branding'] })
     },
   })
@@ -1185,6 +1204,29 @@ export default function AdminSettings() {
             <p className="text-xs text-dark-500 mt-2">
               Оставьте пустым, чтобы показывать только логотип
             </p>
+          </div>
+        </div>
+
+        {/* Animation Toggle */}
+        <div className="mt-6 pt-6 border-t border-dark-700/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium text-dark-200">Анимированный фон</h3>
+              <p className="text-xs text-dark-500 mt-0.5">
+                Волновая анимация на фоне для всех пользователей
+              </p>
+            </div>
+            <button
+              onClick={() => updateAnimationMutation.mutate(!(animationSettings?.enabled ?? true))}
+              disabled={updateAnimationMutation.isPending}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                (animationSettings?.enabled ?? true) ? 'bg-accent-500' : 'bg-dark-600'
+              } ${updateAnimationMutation.isPending ? 'opacity-50' : ''}`}
+            >
+              <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                (animationSettings?.enabled ?? true) ? 'left-7' : 'left-1'
+              }`} />
+            </button>
           </div>
         </div>
       </div>
