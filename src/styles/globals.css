@@ -153,6 +153,19 @@
     overscroll-behavior-y: contain;
     /* iOS smooth scrolling */
     -webkit-overflow-scrolling: touch;
+    position: relative;
+  }
+
+  /* Global Noise Texture */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    mix-blend-mode: overlay;
   }
 
   /* Optimize main scrollable content */
@@ -370,9 +383,13 @@
     border-radius: var(--bento-radius);
     padding: var(--bento-padding);
     transform: translateZ(0);
+    /* Glass Border - Inset Highlight */
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
     /* Stagger animation support */
     animation: bentoFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
     animation-delay: calc(var(--stagger, 0) * 50ms);
+    position: relative;
+    overflow: hidden;
   }
 
   @media (min-width: 1024px) {
@@ -396,6 +413,26 @@
   .bento-card-hover:hover {
     @apply bg-dark-800/60 border-dark-600/50 shadow-lg;
     transform: translateY(-4px);
+    /* Intensify Glass Border & Add Top Spotlight */
+    box-shadow: 
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
+      0 10px 40px -10px rgba(0,0,0,0.5);
+  }
+  
+  /* CSS Spotlight Effect via pseudo-element */
+  .bento-card-hover::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .bento-card-hover:hover::after {
+    opacity: 1;
   }
 
   .bento-card-hover:active {
@@ -439,6 +476,8 @@
 
   .light .bento-card {
     @apply bg-white/90 border-champagne-300/50 shadow-sm;
+    /* Light Theme Glass Border */
+    box-shadow: inset 0 1px 0 0 rgba(0, 0, 0, 0.03);
   }
 
   @media (min-width: 1024px) {
@@ -450,6 +489,15 @@
   .light .bento-card-hover:hover {
     @apply bg-white border-champagne-400/50 shadow-md;
     transform: translateY(-4px);
+    /* Intensify Light Theme Glass Border */
+    box-shadow: 
+      inset 0 1px 0 0 rgba(0, 0, 0, 0.06),
+      0 10px 40px -10px rgba(160, 139, 94, 0.15);
+  }
+  
+  /* Adjust spotlight for light theme to be a warm glow */
+  .light .bento-card-hover::after {
+    background: radial-gradient(circle at top, rgba(255, 253, 249, 0.8), transparent 70%);
   }
 
   .light .bento-card-glow:hover {

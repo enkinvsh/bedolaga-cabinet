@@ -130,6 +130,7 @@ interface BentoCardProps {
 Этап 6: ██████████ 100%
 Этап 7: ██████████ 100%
 Этап 8: ██████████ 100%
+Этап 9: ██████████ 100%
 ─────────────────────
 Общий:  ██████████ 100%
 ```
@@ -193,6 +194,16 @@ interface BentoCardProps {
 | 7.3 | Controls в bento-стиле | `[x]` | Все кнопки: `rounded-xl bg-dark-800/50 hover:bg-dark-700 border border-dark-700/50` |
 | 7.4 | Z-Index = 50 | `[x]` | Подтверждено (выше контента, ниже модалок z-[60]) |
 
+### Этап 9: Visual Mastery (Final)
+> Премиум визуальная полировка
+
+| # | Задача | Статус | Заметки |
+|---|--------|--------|---------|
+| 9.1 | Background Noise | `[x]` | SVG fractalNoise, 3% opacity, mix-blend-mode: overlay, z-index: 0 |
+| 9.2 | Spotlight Effect | `[x]` | `::after` radial-gradient на hover, opacity transition |
+| 9.3 | BentoSkeleton | `[x]` | Компонент с animate-pulse, поддержка count prop |
+| 9.4 | Glass Border | `[x]` | `box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.05)` на base, 0.1 на hover |
+
 ### Этап 8: Полировка
 > Финальные штрихи
 
@@ -234,6 +245,17 @@ interface BentoCardProps {
 - ✅ **Support.tsx**: 3 карточки → `bento-card`, tickets list items → `rounded-bento`
 - ✅ **Profile.tsx**: 3 карточки → `bento-card`
 - ✅ **Info.tsx**: FAQ items, rules, privacy, offer → `bento-card`
+
+### 2026-01-20 — Phase 9 Complete (Visual Mastery)
+- ✅ **Background Noise:** SVG `fractalNoise` pattern, 3% opacity, `mix-blend-mode: overlay`
+- ✅ **Spotlight Effect:** `::after` pseudo-element с `radial-gradient(circle at top, rgba(255,255,255,0.06), transparent 60%)`
+- ✅ **BentoSkeleton Component:** `src/components/ui/BentoSkeleton.tsx` — `animate-pulse`, supports `count` prop
+- ✅ **Glass Border:** `box-shadow: inset 0 1px 0 0 rgba(255,255,255,0.05)` (0.1 on hover)
+- ✅ **Light Theme:** Warm spotlight `rgba(255,253,249,0.8)`, champagne glass borders
+
+**My Fixes (Inspector Review):**
+- Fixed `z-index: 9999` → `z-index: 0` on noise overlay (was blocking modals!)
+- Fixed BentoSkeleton — removed `bento-card` class to avoid entrance animation on skeleton
 
 ### 2026-01-20 — Phase 8 Complete (Полировка)
 - ✅ **Stagger Animation:** `@keyframes bentoFadeIn` (fade-in + translateY(16px→0))
