@@ -215,7 +215,7 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
   // Desktop modal wrapper - compact centered modal with max height
   const DesktopWrapper = ({ children }: { children: React.ReactNode }) => (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in"
+      className="fixed inset-0 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in"
       onClick={onClose}
     >
       <div
