@@ -258,7 +258,8 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
   // Calculate display amount for preview
   const displayAmount = amount && parseFloat(amount) > 0 ? parseFloat(amount) : 0
 
-  const renderContent = () => (
+  // Content JSX - shared between mobile and desktop
+  const contentJSX = (
     <div className="space-y-5">
       {/* Header icon and method */}
       <div className="flex items-center gap-4 pb-1">
@@ -403,8 +404,8 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
     </div>
   )
 
-  // Mobile bottom sheet
-  const MobileModal = () => (
+  // Render modal based on screen size - NO nested components!
+  const modalContent = isMobileScreen ? (
     <>
       {/* Backdrop */}
       <div
@@ -442,14 +443,11 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
 
         {/* Content */}
         <div className="px-5 py-5 overflow-y-auto">
-          {renderContent()}
+          {contentJSX}
         </div>
       </div>
     </>
-  )
-
-  // Desktop modal - positioned higher
-  const DesktopModal = () => (
+  ) : (
     <div
       className="fixed inset-0 bg-black/60 z-[60] flex items-start justify-center p-4 pt-[10vh]"
       onClick={handleClose}
@@ -477,16 +475,14 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
 
         {/* Content */}
         <div className="p-6">
-          {renderContent()}
+          {contentJSX}
         </div>
       </div>
     </div>
   )
 
-  const content = isMobileScreen ? <MobileModal /> : <DesktopModal />
-
   if (typeof document !== 'undefined') {
-    return createPortal(content, document.body)
+    return createPortal(modalContent, document.body)
   }
-  return content
+  return modalContent
 }
