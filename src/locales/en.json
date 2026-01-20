@@ -254,6 +254,7 @@
     "topUp": "Top Up",
     "topUpBalance": "Top Up Balance",
     "enterAmount": "Enter amount",
+    "paymentMethod": "Payment Method",
     "paymentMethods": "Payment Methods",
     "transactionHistory": "Transaction History",
     "noTransactions": "No transactions",

@@ -375,12 +375,12 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
         type="button"
         onClick={handleSubmit}
         disabled={isPending || !amount || parseFloat(amount) <= 0}
-        className={`relative w-full h-14 rounded-2xl text-base font-bold transition-all duration-300 overflow-hidden ${
+        className={`relative w-full h-14 rounded-2xl text-base font-bold transition-colors duration-200 overflow-hidden ${
           isPending || !amount || parseFloat(amount) <= 0
             ? 'bg-dark-700 text-dark-500 cursor-not-allowed'
             : isStarsMethod
-              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg shadow-yellow-500/25 hover:shadow-xl hover:shadow-yellow-500/30 hover:scale-[1.02] active:scale-[0.98]'
-              : 'bg-gradient-to-r from-accent-500 to-accent-600 text-white shadow-lg shadow-accent-500/25 hover:shadow-xl hover:shadow-accent-500/30 hover:scale-[1.02] active:scale-[0.98]'
+              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg shadow-yellow-500/25 hover:from-yellow-400 hover:to-orange-400 active:from-yellow-600 active:to-orange-600'
+              : 'bg-gradient-to-r from-accent-500 to-accent-600 text-white shadow-lg shadow-accent-500/25 hover:from-accent-400 hover:to-accent-500 active:from-accent-600 active:to-accent-700'
         }`}
       >
         {isPending ? (
@@ -408,13 +408,13 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-[9998] bg-black/70 backdrop-blur-sm animate-fade-in-fast"
+        className="fixed inset-0 z-[9998] bg-black/70"
         onClick={handleClose}
       />
       {/* Bottom sheet */}
       <div
         data-modal-content
-        className="fixed inset-x-0 bottom-0 z-[9999] bg-dark-900 rounded-t-3xl max-h-[90vh] flex flex-col animate-slide-up overflow-hidden"
+        className="fixed inset-x-0 bottom-0 z-[9999] bg-dark-900 rounded-t-3xl max-h-[90vh] flex flex-col overflow-hidden"
         style={{ paddingBottom: safeBottom ? `${safeBottom + 20}px` : 'max(20px, env(safe-area-inset-bottom))' }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -448,15 +448,15 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
     </>
   )
 
-  // Desktop centered modal
+  // Desktop modal - positioned higher
   const DesktopModal = () => (
     <div
-      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-fade-in-fast"
+      className="fixed inset-0 bg-black/60 z-[60] flex items-start justify-center p-4 pt-[10vh]"
       onClick={handleClose}
     >
       <div
         data-modal-content
-        className="w-full max-w-md bg-dark-900 rounded-3xl border border-dark-700/50 shadow-2xl overflow-hidden animate-scale-in"
+        className="w-full max-w-md bg-dark-900 rounded-3xl border border-dark-700/50 shadow-2xl overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
