@@ -110,6 +110,34 @@
 
   html {
     overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-dark-700)) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-dark-700));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--color-dark-600));
+  }
+
+  .light ::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-champagne-400));
+  }
+
+  .light ::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--color-champagne-500));
   }
 
   /* Smooth scroll only on desktop - mobile uses native */
@@ -338,11 +366,13 @@
   /* ========== BENTO DESIGN SYSTEM ========== */
 
   .bento-card {
-    @apply bg-dark-900/70 border border-dark-700/40 
-           transition-all duration-300 ease-smooth;
+    @apply bg-dark-900/70 border border-dark-700/40;
     border-radius: var(--bento-radius);
     padding: var(--bento-padding);
     transform: translateZ(0);
+    /* Stagger animation support */
+    animation: bentoFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--stagger, 0) * 50ms);
   }
 
   @media (min-width: 1024px) {
@@ -351,14 +381,41 @@
     }
   }
 
+  /* Disable animation if user prefers reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .bento-card {
+      animation: none;
+    }
+  }
+
   .bento-card-hover {
-    @apply bento-card cursor-pointer
-           hover:bg-dark-800/60 hover:border-dark-600/50 
-           hover:shadow-lg hover:scale-[1.01] active:scale-[0.99];
+    @apply bento-card cursor-pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bento-card-hover:hover {
+    @apply bg-dark-800/60 border-dark-600/50 shadow-lg;
+    transform: translateY(-4px);
+  }
+
+  .bento-card-hover:active {
+    transform: scale(0.98);
+    transition-duration: 0.15s;
   }
 
   .bento-card-glow {
-    @apply bento-card hover:shadow-glow hover:border-accent-500/30 hover:scale-[1.01];
+    @apply bento-card cursor-pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .bento-card-glow:hover {
+    @apply shadow-glow border-accent-500/30;
+    transform: translateY(-4px);
+  }
+
+  .bento-card-glow:active {
+    transform: scale(0.98);
+    transition-duration: 0.15s;
   }
 
   .bento-grid {
@@ -390,12 +447,14 @@
     }
   }
 
-  .light .bento-card-hover {
-    @apply hover:bg-white hover:border-champagne-400/50 hover:shadow-md;
+  .light .bento-card-hover:hover {
+    @apply bg-white border-champagne-400/50 shadow-md;
+    transform: translateY(-4px);
   }
 
-  .light .bento-card-glow {
-    @apply hover:shadow-lg hover:border-accent-400/40;
+  .light .bento-card-glow:hover {
+    @apply shadow-lg border-accent-400/40;
+    transform: translateY(-4px);
   }
 
   /* ========== DARK THEME COMPONENTS (default) ========== */
@@ -1016,6 +1075,17 @@
 }
 
 /* Animations */
+@keyframes bentoFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

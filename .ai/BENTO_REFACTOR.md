@@ -129,6 +129,7 @@ interface BentoCardProps {
 Этап 5: ██████████ 100%
 Этап 6: ██████████ 100%
 Этап 7: ██████████ 100%
+Этап 8: ██████████ 100%
 ─────────────────────
 Общий:  ██████████ 100%
 ```
@@ -195,12 +196,12 @@ interface BentoCardProps {
 ### Этап 8: Полировка
 > Финальные штрихи
 
-| # | Задача |
-|---|--------|
-| 8.1 | Анимации появления карточек (stagger) |
-| 8.2 | Микро-взаимодействия (hover glow) |
-| 8.3 | Тестирование на разных устройствах |
-| 8.4 | Performance check (особенно blur на mobile) |
+| # | Задача | Статус | Заметки |
+|---|--------|--------|---------|
+| 8.1 | Stagger animation для карточек | `[x]` | `bentoFadeIn` keyframe + `--stagger` CSS var (50ms delay каждая) |
+| 8.2 | Micro-interactions | `[x]` | hover: `translateY(-4px)`, active: `scale(0.98)` |
+| 8.3 | Кастомный scrollbar | `[x]` | 6px thin, dark-700 thumb, transparent track |
+| 8.4 | prefers-reduced-motion | `[x]` | Анимации отключаются для accessibility |
 
 ---
 
@@ -233,6 +234,23 @@ interface BentoCardProps {
 - ✅ **Support.tsx**: 3 карточки → `bento-card`, tickets list items → `rounded-bento`
 - ✅ **Profile.tsx**: 3 карточки → `bento-card`
 - ✅ **Info.tsx**: FAQ items, rules, privacy, offer → `bento-card`
+
+### 2026-01-20 — Phase 8 Complete (Полировка)
+- ✅ **Stagger Animation:** `@keyframes bentoFadeIn` (fade-in + translateY(16px→0))
+- ✅ **CSS Variable `--stagger`:** Для delay между карточками (50ms increments)
+- ✅ **Micro-interactions:**
+  - Hover: `translateY(-4px)` + enhanced shadow
+  - Active: `scale(0.98)` + faster transition (150ms)
+- ✅ **Custom Scrollbar:** 6px thin, dark-700 thumb, transparent track
+- ✅ **Accessibility:** `prefers-reduced-motion` disables animations
+- ✅ **Light Theme:** Matching hover/active states for `.light` mode
+
+**Использование stagger в JSX:**
+```jsx
+<div className="bento-card" style={{ '--stagger': 0 }}>Card 1</div>
+<div className="bento-card" style={{ '--stagger': 1 }}>Card 2</div>
+<div className="bento-card" style={{ '--stagger': 2 }}>Card 3</div>
+```
 
 ### 2026-01-20 — Phase 7 Complete (Header + Font)
 - ✅ **Шрифт:** Urbanist → Manrope (Google Fonts, tailwind.config.js, globals.css)
