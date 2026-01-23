@@ -253,6 +253,8 @@
     "currentBalance": "Текущий баланс",
     "topUp": "Пополнить",
     "topUpBalance": "Пополнение баланса",
+    "enterAmount": "Введите сумму",
+    "paymentMethod": "Способ оплаты",
     "paymentMethods": "Способы оплаты",
     "transactionHistory": "История операций",
     "noTransactions": "Нет операций",
