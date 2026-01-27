@@ -145,13 +145,12 @@ export function initTelegramWebApp() {
       webApp.disableVerticalSwipes()
     }
 
-    // Auto-enter fullscreen if enabled in settings (use cached value for instant response)
-    const fullscreenEnabled = getCachedFullscreenEnabled()
-    if (fullscreenEnabled && webApp.requestFullscreen && !webApp.isFullscreen) {
+    // Auto-enter fullscreen if supported
+    if (webApp.requestFullscreen && !webApp.isFullscreen) {
       try {
         webApp.requestFullscreen()
       } catch (e) {
-        console.warn('Auto-fullscreen failed:', e)
+        console.warn('Fullscreen not supported:', e)
       }
     }
   }
