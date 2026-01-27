@@ -58,7 +58,7 @@ export default function ZenLayout({ children }: ZenLayoutProps) {
         </h1>
         
         <div className="ml-auto flex items-center">
-          <div className={`px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-2 border z-10 ${
+          <div className={`px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-2 border z-10 font-[Manrope] ${
             statusInfo.isTrial
               ? statusInfo.isOnline
                 ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
