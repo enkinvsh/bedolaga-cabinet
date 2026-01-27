@@ -7,6 +7,7 @@ import { balanceApi } from '../../api/balance'
 import { triggerHapticFeedback } from '../../hooks/useBackButton'
 import TopUpModal from '../../components/TopUpModal'
 import TariffModal from '../../components/TariffModal'
+import CurrentPlanModal from '../../components/CurrentPlanModal'
 import type { PaymentMethod, TariffsPurchaseOptions, Tariff } from '../../types'
 
 const InfinityIcon = () => (
@@ -71,6 +72,7 @@ export default function PlanTab() {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null)
   const [selectedTariff, setSelectedTariff] = useState<Tariff | null>(null)
   const [showTopUpForPurchase, setShowTopUpForPurchase] = useState(false)
+  const [showPlanModal, setShowPlanModal] = useState(false)
 
   const { data: subscription, isLoading } = useQuery({
     queryKey: ['user-subscription'],
@@ -103,6 +105,12 @@ export default function PlanTab() {
   const shouldShowTariffs = !subscription?.is_active || isTrial
   const isTariffsMode = purchaseOptions?.sales_mode === 'tariffs'
   const tariffs = isTariffsMode ? (purchaseOptions as TariffsPurchaseOptions).tariffs : []
+  
+  const maxTierLevel = tariffs.length > 0 ? Math.max(...tariffs.map(t => t.tier_level)) : 0
+  const currentTierLevel = subscription?.tariff_id 
+    ? tariffs.find(t => t.id === subscription.tariff_id)?.tier_level || 0
+    : 0
+  const canUpgrade = currentTierLevel < maxTierLevel
 
   const getConnectionName = () => {
     if (!subscription || !isActive) {
@@ -139,7 +147,13 @@ export default function PlanTab() {
   return (
     <div className="space-y-6 fade-in">
       {isActive && (
-        <div className="w-full rounded-3xl p-6 bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-glow relative overflow-hidden">
+        <div 
+          className="w-full rounded-3xl p-6 bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-glow relative overflow-hidden cursor-pointer btn-press"
+          onClick={() => {
+            triggerHapticFeedback('light')
+            setShowPlanModal(true)
+          }}
+        >
           <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/20 rounded-full blur-3xl" />
           
           <div className="relative z-10">
@@ -183,13 +197,27 @@ export default function PlanTab() {
                   </p>
                 )}
               </div>
-              <Link
-                to="/subscription"
-                onClick={handleExtend}
-                className="bg-white text-emerald-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm btn-press hover:bg-white/90 transition-colors"
-              >
-                {t('zen.plan.extend', 'Extend')}
-              </Link>
+              <div className="flex gap-2">
+                <Link
+                  to="/subscription"
+                  onClick={handleExtend}
+                  className="bg-white text-emerald-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm btn-press hover:bg-white/90 transition-colors"
+                >
+                  {t('zen.plan.extend', 'Extend')}
+                </Link>
+                {canUpgrade && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      triggerHapticFeedback('light')
+                      setShowPlanModal(true)
+                    }}
+                    className="bg-white text-emerald-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm btn-press hover:bg-white/90 transition-colors"
+                  >
+                    {t('zen.plan.upgrade', 'Upgrade')}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -339,6 +367,13 @@ export default function PlanTab() {
         <TariffModal
           tariff={selectedTariff}
           onClose={() => setSelectedTariff(null)}
+        />
+      )}
+
+      {showPlanModal && subscription && (
+        <CurrentPlanModal
+          subscription={subscription}
+          onClose={() => setShowPlanModal(false)}
         />
       )}
     </div>
