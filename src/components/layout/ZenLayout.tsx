@@ -49,27 +49,31 @@ export default function ZenLayout({ children }: ZenLayoutProps) {
       <header 
         className="px-4 pb-4 flex items-center flex-shrink-0 relative zen-header-safe"
       >
-        <LanguageSwitcher />
+        <div className="flex items-center">
+          <LanguageSwitcher />
+        </div>
         
         <h1 className="font-display text-xl font-bold text-zen-text tracking-tight absolute left-1/2 -translate-x-1/2">
           {import.meta.env.VITE_APP_NAME || 'Zeny'}
         </h1>
         
-        <div className={`ml-auto px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-2 border z-10 ${
-          statusInfo.isTrial
-            ? statusInfo.isOnline
-              ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-              : 'bg-red-500/10 text-red-500 border-red-500/20'
-            : statusInfo.isOnline 
-              ? 'bg-zen-accent/10 text-zen-accent border-zen-accent/20' 
-              : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
-        }`}>
-          <div className={`w-1.5 h-1.5 rounded-full ${
+        <div className="ml-auto flex items-center">
+          <div className={`px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-2 border z-10 ${
             statusInfo.isTrial
-              ? statusInfo.isOnline ? 'bg-amber-500' : 'bg-red-500'
-              : statusInfo.isOnline ? 'bg-zen-accent' : 'bg-slate-500'
-          } animate-pulse`} />
-          {statusInfo.label}
+              ? statusInfo.isOnline
+                ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                : 'bg-red-500/10 text-red-500 border-red-500/20'
+              : statusInfo.isOnline 
+                ? 'bg-zen-accent/10 text-zen-accent border-zen-accent/20' 
+                : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
+          }`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${
+              statusInfo.isTrial
+                ? statusInfo.isOnline ? 'bg-amber-500' : 'bg-red-500'
+                : statusInfo.isOnline ? 'bg-zen-accent' : 'bg-slate-500'
+            } animate-pulse`} />
+            {statusInfo.label}
+          </div>
         </div>
       </header>
 

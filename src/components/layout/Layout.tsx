@@ -464,7 +464,7 @@ export default function Layout({ children }: LayoutProps) {
                 <TicketNotificationBell isAdmin={isAdminActive()} />
               </div>
               {/* Hide language switcher on mobile when promo is active */}
-              <div className={isPromoActive ? 'hidden sm:block' : ''} onClick={() => setMobileMenuOpen(false)}>
+              <div className={isPromoActive ? 'hidden sm:flex items-center' : 'flex items-center'} onClick={() => setMobileMenuOpen(false)}>
                 <LanguageSwitcher />
               </div>
 
