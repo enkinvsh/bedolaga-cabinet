@@ -16,6 +16,8 @@ import { promoApi } from '../../api/promo'
 import { useTheme } from '../../hooks/useTheme'
 import { useTelegramWebApp } from '../../hooks/useTelegramWebApp'
 import { usePullToRefresh } from '../../hooks/usePullToRefresh'
+import { useBackButton } from '../../hooks/useBackButton'
+import ZenBottomNav from '../zen/ZenBottomNav'
 
 // Fallback branding from environment variables
 const FALLBACK_NAME = import.meta.env.VITE_APP_NAME || 'Cabinet'
@@ -132,6 +134,12 @@ export default function Layout({ children }: LayoutProps) {
   const { toggleTheme, isDark } = useTheme()
   const [userPhotoUrl, setUserPhotoUrl] = useState<string | null>(null)
   const { isFullscreen, safeAreaInset, contentSafeAreaInset } = useTelegramWebApp()
+  
+  useBackButton()
+  
+  const isAdminRoute = location.pathname.startsWith('/admin')
+  const isZenTabRoute = ['/', '/plan', '/menu'].includes(location.pathname)
+  const showZenBottomNav = isZenTabRoute && !isAdminRoute
 
   // Pull to refresh (disabled when mobile menu is open)
   const { isPulling, pullDistance, isRefreshing, progress } = usePullToRefresh({
@@ -622,31 +630,35 @@ export default function Layout({ children }: LayoutProps) {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 pb-24 lg:pb-8">
+      <main className={`flex-1 w-full mx-auto px-4 sm:px-6 py-6 pb-24 lg:pb-8 ${isAdminRoute ? 'max-w-6xl' : 'max-w-[430px]'}`}>
         <div className="animate-fade-in">
           {children}
         </div>
 
       </main>
 
-      {/* Mobile Bottom Navigation - only core items */}
-      <nav className="bottom-nav lg:hidden">
-        <div className="flex justify-around">
-          {navItems.filter(item =>
-            ['/', '/subscription', '/balance', '/referral', '/support'].includes(item.path)
-          ).map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setMobileMenuOpen(false)}
-              className={isActive(item.path) ? 'bottom-nav-item-active' : 'bottom-nav-item'}
-            >
-              <item.icon />
-              <span className="text-2xs mt-1 whitespace-nowrap">{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      {/* Mobile Bottom Navigation */}
+      {showZenBottomNav ? (
+        <ZenBottomNav />
+      ) : (
+        <nav className="bottom-nav lg:hidden">
+          <div className="flex justify-around">
+            {navItems.filter(item =>
+              ['/', '/subscription', '/balance', '/referral', '/support'].includes(item.path)
+            ).map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
+                className={isActive(item.path) ? 'bottom-nav-item-active' : 'bottom-nav-item'}
+              >
+                <item.icon />
+                <span className="text-2xs mt-1 whitespace-nowrap">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </div>
   )
 }

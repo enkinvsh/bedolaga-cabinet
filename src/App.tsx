@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './store/auth'
 import { useBlockingStore } from './store/blocking'
 import Layout from './components/layout/Layout'
+import ZenLayout from './components/layout/ZenLayout'
 import PageLoader from './components/common/PageLoader'
 import { MaintenanceScreen, ChannelSubscriptionScreen } from './components/blocking'
 import { saveReturnUrl } from './utils/token'
@@ -25,6 +26,10 @@ const Contests = lazy(() => import('./pages/Contests'))
 const Polls = lazy(() => import('./pages/Polls'))
 const Info = lazy(() => import('./pages/Info'))
 const Wheel = lazy(() => import('./pages/Wheel'))
+
+const FlowTab = lazy(() => import('./pages/zen/FlowTab'))
+const PlanTab = lazy(() => import('./pages/zen/PlanTab'))
+const MenuTab = lazy(() => import('./pages/zen/MenuTab'))
 
 // Admin pages - lazy load (only for admins)
 const AdminPanel = lazy(() => import('./pages/AdminPanel'))
@@ -91,6 +96,22 @@ function LazyPage({ children }: { children: React.ReactNode }) {
   )
 }
 
+function ZenRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuthStore()
+  const location = useLocation()
+
+  if (isLoading) {
+    return <PageLoader variant="dark" />
+  }
+
+  if (!isAuthenticated) {
+    saveReturnUrl()
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />
+  }
+
+  return <ZenLayout>{children}</ZenLayout>
+}
+
 function BlockingOverlay() {
   const { blockingType } = useBlockingStore()
 
@@ -119,9 +140,35 @@ function App() {
       <Route path="/add" element={<DeepLinkRedirect />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
 
-      {/* Protected routes */}
+      {/* Zen routes - minimal layout */}
       <Route
         path="/"
+        element={
+          <ZenRoute>
+            <LazyPage><FlowTab /></LazyPage>
+          </ZenRoute>
+        }
+      />
+      <Route
+        path="/plan"
+        element={
+          <ZenRoute>
+            <LazyPage><PlanTab /></LazyPage>
+          </ZenRoute>
+        }
+      />
+      <Route
+        path="/menu"
+        element={
+          <ZenRoute>
+            <LazyPage><MenuTab /></LazyPage>
+          </ZenRoute>
+        }
+      />
+
+      {/* Protected routes with full layout */}
+      <Route
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <LazyPage><Dashboard /></LazyPage>

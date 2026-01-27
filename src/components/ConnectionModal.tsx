@@ -2,18 +2,24 @@ import { useState, useMemo, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import { subscriptionApi } from '../api/subscription'
-import { useTelegramWebApp } from '../hooks/useTelegramWebApp'
-import type { AppInfo, AppConfig, LocalizedText } from '../types'
+import { triggerHapticFeedback } from '../hooks/useBackButton'
+import type { AppInfo, AppConfig } from '../types'
 
 interface ConnectionModalProps {
   onClose: () => void
 }
 
-// Icons
-const CloseIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+const DownloadIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+  </svg>
+)
+
+const MagicIcon = () => (
+  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
   </svg>
 )
 
@@ -29,25 +35,6 @@ const CheckIcon = () => (
   </svg>
 )
 
-const LinkIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-  </svg>
-)
-
-const ChevronIcon = () => (
-  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-  </svg>
-)
-
-const BackIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-  </svg>
-)
-
-// App icons
 const HappIcon = () => (
   <svg className="w-6 h-6" viewBox="0 0 50 50" fill="currentColor">
     <path d="M22.3264 3H12.3611L9.44444 20.1525L21.3542 8.22034L22.3264 3Z"/>
@@ -71,17 +58,10 @@ const ShadowrocketIcon = () => (
   </svg>
 )
 
-const StreisandIcon = () => (
-  <svg className="w-6 h-6" viewBox="0 0 50 50" fill="currentColor">
-    <path d="M25 46L24.2602 47.0076C24.7027 47.3325 25.3054 47.3306 25.7459 47.0031L25 46ZM6.14773 32.1591H4.89773C4.89773 32.557 5.0872 32.9312 5.40797 33.1667L6.14773 32.1591ZM43.6136 32.1591L44.3595 33.1622C44.6767 32.9263 44.8636 32.5543 44.8636 32.1591H43.6136ZM6.14773 19.9886L5.42485 18.9689C5.09421 19.2032 4.89773 19.5834 4.89773 19.9886H6.14773ZM25 6.625L25.729 5.6096L25.0046 5.08952L24.2771 5.60522L25 6.625ZM43.6136 19.9886H44.8636C44.8636 19.586 44.6697 19.208 44.3426 18.9732L43.6136 19.9886ZM25 46L25.7398 44.9924L6.88748 31.1515L6.14773 32.1591L5.40797 33.1667L24.2602 47.0076L25 46ZM43.6136 32.1591L42.8678 31.156L24.2541 44.9969L25 46L25.7459 47.0031L44.3595 33.1622L43.6136 32.1591Z"/>
-  </svg>
-)
-
 const getAppIcon = (appName: string): React.ReactNode => {
   const name = appName.toLowerCase()
   if (name.includes('happ')) return <HappIcon />
   if (name.includes('shadowrocket') || name.includes('rocket')) return <ShadowrocketIcon />
-  if (name.includes('streisand')) return <StreisandIcon />
   if (name.includes('clash') || name.includes('meta') || name.includes('verge')) return <ClashMetaIcon />
   return <span className="text-lg">📦</span>
 }
@@ -114,115 +94,84 @@ function detectPlatform(): string | null {
   return null
 }
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return window.innerWidth < 768
-  })
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768)
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
-  }, [])
-  return isMobile
+const platformNames: Record<string, string> = {
+  ios: 'iOS / iPadOS',
+  android: 'Android',
+  windows: 'Windows',
+  macos: 'macOS',
+  linux: 'Linux',
+  androidTV: 'Android TV',
+  appleTV: 'Apple TV'
+}
+
+const platformColors: Record<string, string> = {
+  ios: 'bg-slate-900 dark:bg-slate-800',
+  android: 'bg-emerald-500',
+  windows: 'bg-blue-500',
+  macos: 'bg-slate-700',
+  linux: 'bg-orange-500',
+  androidTV: 'bg-emerald-600',
+  appleTV: 'bg-slate-800'
 }
 
 export default function ConnectionModal({ onClose }: ConnectionModalProps) {
   const { t, i18n } = useTranslation()
+  const navigate = useNavigate()
   const [selectedApp, setSelectedApp] = useState<AppInfo | null>(null)
   const [copied, setCopied] = useState(false)
-  const [showAppSelector, setShowAppSelector] = useState(false)
-
-  const { isTelegramWebApp, isFullscreen, safeAreaInset, contentSafeAreaInset, webApp } = useTelegramWebApp()
-  const isMobileScreen = useIsMobile()
-  const isMobile = isMobileScreen
-
-  const safeBottom = isTelegramWebApp ? Math.max(safeAreaInset.bottom, contentSafeAreaInset.bottom) : 0
-  const safeTop = isTelegramWebApp ? Math.max(safeAreaInset.top, contentSafeAreaInset.top) + (isFullscreen ? 45 : 0) : 0
+  const [isVisible, setIsVisible] = useState(false)
 
   const { data: appConfig, isLoading, error } = useQuery<AppConfig>({
     queryKey: ['appConfig'],
     queryFn: () => subscriptionApi.getAppConfig(),
   })
 
-  // Detect platform ONCE on mount (stable reference)
   const detectedPlatform = useMemo(() => detectPlatform(), [])
 
-  // Set initial app based on detected platform - AFTER appConfig loads
   useEffect(() => {
     if (!appConfig?.platforms || selectedApp) return
-
-    // Priority: detected platform > first available platform
+    
     let platform = detectedPlatform
     if (!platform || !appConfig.platforms[platform]?.length) {
       platform = platformOrder.find(p => appConfig.platforms[p]?.length > 0) || null
     }
-
+    
     if (!platform || !appConfig.platforms[platform]?.length) return
-
+    
     const apps = appConfig.platforms[platform]
-    // Select featured app or first app for the detected platform
     const app = apps.find(a => a.isFeatured) || apps[0]
     if (app) setSelectedApp(app)
   }, [appConfig, detectedPlatform, selectedApp])
 
-  const handleClose = useCallback(() => {
-    onClose()
-  }, [onClose])
-
-  const handleBack = useCallback(() => {
-    setShowAppSelector(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 10)
+    return () => clearTimeout(timer)
   }, [])
 
-  // Keyboard: Escape to close (PC)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        if (showAppSelector) handleBack()
-        else handleClose()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [handleClose, handleBack, showAppSelector])
-
-  // Telegram back button (Android)
-  useEffect(() => {
-    if (!webApp?.BackButton) return
-    const handler = showAppSelector ? handleBack : handleClose
-    webApp.BackButton.show()
-    webApp.BackButton.onClick(handler)
-    return () => {
-      webApp.BackButton.offClick(handler)
-      webApp.BackButton.hide()
-    }
-  }, [webApp, handleClose, handleBack, showAppSelector])
-
-  // Scroll lock
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  const getLocalizedText = (text: LocalizedText | undefined): string => {
-    if (!text) return ''
-    const lang = i18n.language || 'en'
-    return text[lang] || text['en'] || text['ru'] || Object.values(text)[0] || ''
-  }
-
-  const availablePlatforms = useMemo(() => {
-    if (!appConfig?.platforms) return []
-    const available = platformOrder.filter(key => appConfig.platforms[key]?.length > 0)
-    // Put detected platform first
-    if (detectedPlatform && available.includes(detectedPlatform)) {
-      return [detectedPlatform, ...available.filter(p => p !== detectedPlatform)]
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        handleClose()
+      }
     }
-    return available
-  }, [appConfig, detectedPlatform])
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const handleClose = useCallback(() => {
+    setIsVisible(false)
+    setTimeout(onClose, 300)
+  }, [onClose])
 
   const copySubscriptionLink = async () => {
     if (!appConfig?.subscriptionUrl) return
+    triggerHapticFeedback('light')
     try {
       await navigator.clipboard.writeText(appConfig.subscriptionUrl)
       setCopied(true)
@@ -241,6 +190,7 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
 
   const handleConnect = (app: AppInfo) => {
     if (!app.deepLink || !isValidDeepLink(app.deepLink)) return
+    triggerHapticFeedback('medium')
     const lang = i18n.language?.startsWith('ru') ? 'ru' : 'en'
     const redirectUrl = `${window.location.origin}/miniapp/redirect.html?url=${encodeURIComponent(app.deepLink)}&lang=${lang}`
     const tg = (window as unknown as { Telegram?: { WebApp?: { openLink?: (url: string, options?: object) => void } } }).Telegram?.WebApp
@@ -248,255 +198,131 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
       try {
         tg.openLink(redirectUrl, { try_instant_view: false, try_browser: true })
         return
-      } catch { /* fallback */ }
+      } catch { }
     }
     window.location.href = redirectUrl
   }
 
-  // Wrapper component
-  const Wrapper = ({ children }: { children: React.ReactNode }) => {
-    if (isMobile) {
-      // Mobile fullscreen
-      const content = (
-        <div
-          className="fixed inset-0 z-[9999] bg-dark-900 flex flex-col"
-          style={{
-            paddingTop: safeTop ? `${safeTop}px` : 'env(safe-area-inset-top, 0px)',
-            paddingBottom: safeBottom ? `${safeBottom}px` : 'env(safe-area-inset-bottom, 0px)'
-          }}
-        >
-          {children}
-        </div>
-      )
-      if (typeof document !== 'undefined') return createPortal(content, document.body)
-      return content
-    }
-
-    // Desktop centered
-    return (
-      <div className="fixed inset-0 bg-black/60 z-[60] flex items-start justify-center p-4 pt-[8vh]" onClick={handleClose}>
-        <div
-          className="relative w-full max-w-md max-h-[85vh] bg-dark-900 rounded-2xl border border-dark-700/50 shadow-2xl flex flex-col overflow-hidden"
-          onClick={e => e.stopPropagation()}
-        >
-          {children}
-        </div>
-      </div>
-    )
+  const handleDownload = (app: AppInfo) => {
+    triggerHapticFeedback('light')
+    const installStep = app.installationStep
+    if (!installStep?.buttons?.length) return
+    
+    const downloadBtn = installStep.buttons.find(btn => isValidExternalUrl(btn.buttonLink))
+    if (!downloadBtn?.buttonLink) return
+    
+    window.open(downloadBtn.buttonLink, '_blank')
   }
 
-  // Loading
-  if (isLoading) {
-    return (
-      <Wrapper>
-        <div className="flex-1 flex items-center justify-center">
-          <div className="w-10 h-10 border-[3px] border-accent-500/30 border-t-accent-500 rounded-full animate-spin" />
-        </div>
-      </Wrapper>
-    )
-  }
+  const currentPlatformName = selectedApp ? platformNames[detectedPlatform || 'android'] : ''
 
-  // Error
-  if (error || !appConfig) {
-    return (
-      <Wrapper>
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <p className="text-dark-300 text-lg mb-4">{t('common.error')}</p>
-          <button onClick={handleClose} className="btn-primary px-6 py-2">{t('common.close')}</button>
-        </div>
-      </Wrapper>
-    )
-  }
-
-  // No subscription
-  if (!appConfig.hasSubscription) {
-    return (
-      <Wrapper>
-        <div className="flex-1 flex flex-col items-center justify-center p-8 text-center">
-          <h3 className="font-bold text-dark-100 text-xl mb-2">{t('subscription.connection.title')}</h3>
-          <p className="text-dark-400 mb-4">{t('subscription.connection.noSubscription')}</p>
-          <button onClick={handleClose} className="btn-primary px-6 py-2">{t('common.close')}</button>
-        </div>
-      </Wrapper>
-    )
-  }
-
-  // App selector
-  if (showAppSelector) {
-    const platformNames: Record<string, string> = {
-      ios: 'iOS', android: 'Android', windows: 'Windows',
-      macos: 'macOS', linux: 'Linux', androidTV: 'Android TV', appleTV: 'Apple TV'
-    }
-
-    return (
-      <Wrapper>
-        {/* Header */}
-        <div className="flex items-center gap-3 p-4 border-b border-dark-800">
-          <button onClick={handleBack} className="p-2 -ml-2 rounded-xl hover:bg-dark-800 text-dark-300">
-            <BackIcon />
-          </button>
-          <h2 className="font-bold text-dark-100 text-lg">{t('subscription.connection.selectApp')}</h2>
-        </div>
-
-        {/* Apps grouped by platform */}
-        <div className={`${isMobile ? 'flex-1' : 'max-h-[60vh]'} overflow-y-auto p-4 space-y-5`}>
-          {availablePlatforms.map(platform => {
-            const apps = appConfig.platforms[platform]
-            if (!apps?.length) return null
-            const isCurrentPlatform = platform === detectedPlatform
-
-            return (
-              <div key={platform}>
-                {/* Platform header */}
-                <div className="flex items-center gap-2 mb-2 px-1">
-                  <span className={`text-sm font-semibold ${isCurrentPlatform ? 'text-accent-400' : 'text-dark-400'}`}>
-                    {platformNames[platform] || platform}
-                  </span>
-                  {isCurrentPlatform && (
-                    <span className="text-xs text-accent-500 bg-accent-500/10 px-2 py-0.5 rounded-full">
-                      {t('subscription.connection.yourDevice')}
-                    </span>
-                  )}
-                </div>
-
-                {/* Apps for this platform */}
-                <div className="space-y-2">
-                  {apps.map(app => (
-                    <button
-                      key={app.id}
-                      onClick={() => { setSelectedApp(app); setShowAppSelector(false) }}
-                      className={`w-full p-3 rounded-xl flex items-center gap-3 transition-all ${
-                        selectedApp?.id === app.id
-                          ? 'bg-accent-500/10 ring-1 ring-accent-500/30'
-                          : 'bg-dark-800/50 hover:bg-dark-800'
-                      }`}
-                    >
-                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                        selectedApp?.id === app.id ? 'bg-accent-500/20 text-accent-400' : 'bg-dark-700 text-dark-300'
-                      }`}>
-                        {getAppIcon(app.name)}
-                      </div>
-                      <div className="flex-1 text-left">
-                        <span className="font-medium text-dark-100">{app.name}</span>
-                        {app.isFeatured && (
-                          <span className="ml-2 text-xs text-accent-400">{t('subscription.connection.featured')}</span>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </Wrapper>
-    )
-  }
-
-  // Main view
-  return (
-    <Wrapper>
-      {/* Header */}
-      <div className="p-4 border-b border-dark-800">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-dark-100 text-lg">{t('subscription.connection.title')}</h2>
-          <button onClick={handleClose} className="p-2 -mr-2 rounded-xl hover:bg-dark-800 text-dark-400">
-            <CloseIcon />
-          </button>
-        </div>
-
-        {/* App selector button */}
-        <button
-          onClick={() => setShowAppSelector(true)}
-          className="w-full flex items-center gap-3 p-3 rounded-xl bg-dark-800/50 hover:bg-dark-800 transition-colors"
-        >
-          <div className="w-10 h-10 rounded-lg bg-accent-500/10 flex items-center justify-center text-accent-400">
-            {selectedApp && getAppIcon(selectedApp.name)}
+  const content = (
+    <div className="fixed inset-0 z-[9999] flex items-end justify-center">
+      <div 
+        className={`absolute inset-0 zen-glass transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
+        onClick={handleClose}
+      />
+      
+      <div 
+        className={`w-full max-w-[430px] bg-zen-card rounded-t-[2.5rem] p-8 transform transition-transform duration-300 relative ${
+          isVisible ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="w-12 h-1.5 bg-zen-sub/30 rounded-full mx-auto mb-6" />
+        
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="w-10 h-10 border-[3px] border-zen-accent/30 border-t-zen-accent rounded-full animate-spin" />
           </div>
-          <div className="flex-1 text-left">
-            <div className="font-medium text-dark-100">{selectedApp?.name}</div>
-            <div className="text-sm text-dark-400">{t('subscription.connection.changeApp') || 'Сменить приложение'}</div>
+        ) : error || !appConfig ? (
+          <div className="text-center py-8">
+            <p className="text-zen-sub text-lg mb-4">{t('common.error')}</p>
+            <button onClick={handleClose} className="px-6 py-2 bg-zen-accent text-white rounded-xl font-bold">
+              {t('common.close')}
+            </button>
           </div>
-          <ChevronIcon />
-        </button>
-      </div>
-
-      {/* Steps */}
-      <div className={`${isMobile ? 'flex-1' : 'max-h-[50vh]'} overflow-y-auto p-4 space-y-4`}>
-        {/* Step 1: Install */}
-        {selectedApp?.installationStep && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-accent-500/20 flex items-center justify-center text-xs font-bold text-accent-400">1</span>
-              <span className="font-medium text-dark-100">{t('subscription.connection.installApp')}</span>
-            </div>
-            <p className="text-dark-400 text-sm ml-8">{getLocalizedText(selectedApp.installationStep.description)}</p>
-            {selectedApp.installationStep.buttons && selectedApp.installationStep.buttons.length > 0 && (
-              <div className="flex flex-wrap gap-2 ml-8">
-                {selectedApp.installationStep.buttons.filter(btn => isValidExternalUrl(btn.buttonLink)).map((btn, idx) => (
-                  <a
-                    key={idx}
-                    href={btn.buttonLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dark-800 text-dark-200 text-sm hover:bg-dark-700"
-                  >
-                    {getLocalizedText(btn.buttonText)}
-                  </a>
-                ))}
+        ) : !appConfig.hasSubscription ? (
+          <div className="text-center py-8">
+            <h3 className="font-display text-2xl font-bold text-zen-text mb-3">
+              {t('zen.access.title', 'Access Required')}
+            </h3>
+            <p className="text-zen-sub mb-6 whitespace-pre-line">
+              {t('zen.access.subtitle', 'Activate your subscription to unleash the flow.')}
+            </p>
+            <button 
+              onClick={() => {
+                triggerHapticFeedback('light')
+                handleClose()
+                navigate('/plan')
+              }} 
+              className="w-full py-4 bg-gradient-to-r from-emerald-400 to-teal-600 text-white rounded-xl font-bold text-lg shadow-glow btn-press"
+            >
+              {t('zen.access.activate', 'Activate')}
+            </button>
+          </div>
+        ) : (
+          <>
+            <h3 className="font-display text-2xl font-bold text-zen-text mb-2">
+              {t('zen.setup.title', 'Setup Connection')}
+            </h3>
+            <p className="text-zen-sub text-sm mb-6 font-medium">
+              {t('zen.setup.subtitle', 'One-time setup to unlock your flow.')}
+            </p>
+            
+            {selectedApp && (
+              <div className="space-y-3 mb-8">
+                <button
+                  onClick={() => handleDownload(selectedApp)}
+                  className="w-full bg-zen-bg border border-zen-sub/10 p-4 rounded-2xl flex items-center gap-4 hover:bg-zen-sub/5 transition active:scale-[0.98] text-left"
+                >
+                  <div className={`w-10 h-10 rounded-xl ${platformColors[detectedPlatform || 'android']} text-white flex items-center justify-center`}>
+                    {getAppIcon(selectedApp.name)}
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-bold text-zen-text">{selectedApp.name}</h4>
+                    <p className="text-xs text-zen-sub">{currentPlatformName}</p>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-white dark:bg-zen-card flex items-center justify-center text-zen-accent shadow-sm">
+                    <DownloadIcon />
+                  </div>
+                </button>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Step 2: Add subscription */}
-        {selectedApp?.addSubscriptionStep && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-accent-500/20 flex items-center justify-center text-xs font-bold text-accent-400">2</span>
-              <span className="font-medium text-dark-100">{t('subscription.connection.addSubscription')}</span>
-            </div>
-            <p className="text-dark-400 text-sm ml-8">{getLocalizedText(selectedApp.addSubscriptionStep.description)}</p>
-
-            <div className="space-y-2 ml-8">
-              {/* Connect button */}
-              {selectedApp.deepLink && (
-                <button
-                  onClick={() => handleConnect(selectedApp)}
-                  className="w-full btn-primary h-11 text-sm font-semibold flex items-center justify-center gap-2"
-                >
-                  <LinkIcon />
-                  {t('subscription.connection.addToApp', { appName: selectedApp.name })}
-                </button>
-              )}
-
-              {/* Copy link */}
+            
+            {selectedApp?.deepLink && (
               <button
-                onClick={copySubscriptionLink}
-                className={`w-full h-11 rounded-xl border transition-all flex items-center justify-center gap-2 text-sm font-medium ${
-                  copied
-                    ? 'border-success-500 bg-success-500/10 text-success-400'
-                    : 'border-dark-600 text-dark-300 hover:bg-dark-800'
-                }`}
+                onClick={() => handleConnect(selectedApp)}
+                className="w-full py-4 bg-zen-text text-white dark:bg-zen-accent rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 btn-press mb-4 hover:opacity-90 transition-opacity"
               >
-                {copied ? <CheckIcon /> : <CopyIcon />}
-                {copied ? t('subscription.connection.copied') : t('subscription.connection.copyLink')}
+                <MagicIcon />
+                <span>{t('zen.setup.autoAdd', 'Auto-Add Config')}</span>
               </button>
-            </div>
-          </div>
-        )}
-
-        {/* Step 3: Connect */}
-        {selectedApp?.connectAndUseStep && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-success-500/20 flex items-center justify-center text-xs font-bold text-success-400">3</span>
-              <span className="font-medium text-dark-100">{t('subscription.connection.connectVpn')}</span>
-            </div>
-            <p className="text-dark-400 text-sm ml-8">{getLocalizedText(selectedApp.connectAndUseStep.description)}</p>
-          </div>
+            )}
+            
+            <button
+              onClick={copySubscriptionLink}
+              className={`w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all mb-4 ${
+                copied
+                  ? 'bg-zen-accent/10 text-zen-accent border border-zen-accent/30'
+                  : 'bg-zen-sub/10 text-zen-sub hover:bg-zen-sub/20'
+              }`}
+            >
+              {copied ? <CheckIcon /> : <CopyIcon />}
+              {copied ? t('subscription.connection.copied') : t('subscription.connection.copyLink')}
+            </button>
+            
+            <p className="text-center text-xs text-zen-sub font-medium">
+              {t('zen.setup.hint', 'Tap "Auto-Add" after installing the app')}
+            </p>
+          </>
         )}
       </div>
-    </Wrapper>
+    </div>
   )
+
+  if (typeof document !== 'undefined') {
+    return createPortal(content, document.body)
+  }
+  return content
 }

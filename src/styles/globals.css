@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Urbanist:wght@400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -16,8 +16,19 @@
     --bento-padding: 24px;
     --bento-padding-lg: 32px;
 
+    /* ========== ZEN DESIGN SYSTEM ========== */
+    /* Zen Light Theme (default for .light class) */
+    --zen-bg: 248, 250, 252;
+    --zen-card: 255, 255, 255;
+    --zen-text: 15, 23, 42;
+    --zen-sub: 100, 116, 139;
+    --zen-accent: 16, 185, 129;
+    --zen-accent-dark: 5, 150, 105;
+    --zen-soft-green: 209, 250, 229;
+    --zen-border: 241, 245, 249;
+
     /* Theme colors - RGB format for opacity support */
-    /* Dark palette (RGB values) */
+    /* Dark palette (Slate-based for Zen) */
     --color-dark-50: 248, 250, 252;
     --color-dark-100: 241, 245, 249;
     --color-dark-200: 226, 232, 240;
@@ -31,7 +42,7 @@
     --color-dark-900: 15, 23, 42;
     --color-dark-950: 10, 15, 26;
 
-    /* Champagne palette (RGB values) */
+    /* Champagne palette (RGB values) - legacy compatibility */
     --color-champagne-50: 255, 253, 249;
     --color-champagne-100: 254, 249, 240;
     --color-champagne-200: 247, 231, 206;
@@ -44,18 +55,18 @@
     --color-champagne-900: 61, 52, 36;
     --color-champagne-950: 31, 26, 18;
 
-    /* Accent palette (RGB values) - dynamically set by ThemeColorsProvider */
-    --color-accent-50: 239, 246, 255;
-    --color-accent-100: 219, 234, 254;
-    --color-accent-200: 191, 219, 254;
-    --color-accent-300: 147, 197, 253;
-    --color-accent-400: 96, 165, 250;
-    --color-accent-500: 59, 130, 246;
-    --color-accent-600: 37, 99, 235;
-    --color-accent-700: 29, 78, 216;
-    --color-accent-800: 30, 64, 175;
-    --color-accent-900: 30, 58, 138;
-    --color-accent-950: 23, 37, 84;
+    /* Accent palette - Emerald for Zen */
+    --color-accent-50: 236, 253, 245;
+    --color-accent-100: 209, 250, 229;
+    --color-accent-200: 167, 243, 208;
+    --color-accent-300: 110, 231, 183;
+    --color-accent-400: 52, 211, 153;
+    --color-accent-500: 16, 185, 129;
+    --color-accent-600: 5, 150, 105;
+    --color-accent-700: 4, 120, 87;
+    --color-accent-800: 6, 95, 70;
+    --color-accent-900: 6, 78, 59;
+    --color-accent-950: 2, 44, 34;
 
     /* Success palette (RGB values) */
     --color-success-50: 240, 253, 244;
@@ -106,6 +117,28 @@
     --color-light-surface: #FEF9F0;
     --color-light-text: #1F1A12;
     --color-light-text-secondary: #7D6B48;
+  }
+
+  .light {
+    --zen-bg: 248, 250, 252;
+    --zen-card: 255, 255, 255;
+    --zen-text: 15, 23, 42;
+    --zen-sub: 100, 116, 139;
+    --zen-accent: 16, 185, 129;
+    --zen-accent-dark: 5, 150, 105;
+    --zen-soft-green: 209, 250, 229;
+    --zen-border: 241, 245, 249;
+  }
+
+  .dark {
+    --zen-bg: 15, 23, 42;
+    --zen-card: 30, 41, 59;
+    --zen-text: 241, 245, 249;
+    --zen-sub: 148, 163, 184;
+    --zen-accent: 52, 211, 153;
+    --zen-accent-dark: 16, 185, 129;
+    --zen-soft-green: 6, 78, 59;
+    --zen-border: 51, 65, 85;
   }
 
   html {
@@ -376,6 +409,114 @@
 }
 
 @layer components {
+  /* ========== ZEN DESIGN SYSTEM ========== */
+
+  .zen-card {
+    @apply bg-white rounded-2xl p-4 shadow-xl ring-1 ring-black/5;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .zen-card-hover {
+    @apply zen-card cursor-pointer;
+  }
+
+  .zen-card-hover:hover {
+    @apply ring-emerald-200;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .zen-card-hover:active {
+    transform: scale(0.98);
+  }
+
+  .dark .zen-card {
+    @apply bg-slate-800/80 ring-white/10;
+  }
+
+  .dark .zen-card-hover:hover {
+    @apply ring-emerald-500/30 bg-slate-800;
+  }
+
+  .zen-glass {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+  }
+
+  .dark .zen-glass {
+    background: rgba(30, 41, 59, 0.95);
+    border: 1px solid rgba(51, 65, 85, 0.5);
+  }
+
+  .zen-modal-backdrop {
+    background: rgba(15, 23, 42, 0.2);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  .dark .zen-modal-backdrop {
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .zen-gradient-card {
+    @apply rounded-3xl p-6 text-white relative overflow-hidden;
+    background: linear-gradient(to bottom right, #34d399, #0d9488);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+  }
+
+  .zen-gradient-card::before {
+    content: "";
+    position: absolute;
+    right: -40px;
+    top: -40px;
+    width: 160px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    filter: blur(48px);
+  }
+
+  .btn-press:active {
+    transform: scale(0.96);
+    transition: transform 0.1s ease;
+  }
+
+  /* Telegram Mini App header safe area - uses official TG CSS variables */
+  .zen-header-safe {
+    /* 
+     * --tg-content-safe-area-inset-top: space below TG buttons (Back, Close)
+     * --tg-safe-area-inset-top: system safe area (notch, status bar)
+     * We need BOTH: system safe area + TG buttons safe area
+     */
+    padding-top: calc(
+      var(--tg-safe-area-inset-top, 0px) + 
+      var(--tg-content-safe-area-inset-top, 0px) + 
+      8px
+    );
+  }
+
+  .zen-bottom-nav {
+    @apply fixed bottom-0 left-0 right-0 z-40;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgb(241, 245, 249);
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.03);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .dark .zen-bottom-nav {
+    background: rgba(15, 23, 42, 0.95);
+    border-top: 1px solid rgb(51, 65, 85);
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.2);
+  }
+
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   /* ========== BENTO DESIGN SYSTEM ========== */
 
   .bento-card {

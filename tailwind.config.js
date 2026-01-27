@@ -19,7 +19,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Modern neutral palette
+        // Zen Design System - semantic colors
+        zen: {
+          bg: withOpacity('--zen-bg'),
+          card: withOpacity('--zen-card'),
+          text: withOpacity('--zen-text'),
+          sub: withOpacity('--zen-sub'),
+          accent: withOpacity('--zen-accent'),
+          accentDark: withOpacity('--zen-accent-dark'),
+          softGreen: withOpacity('--zen-soft-green'),
+          border: withOpacity('--zen-border'),
+        },
+        // Modern neutral palette (Slate-based for Zen)
         dark: {
           50: withOpacity('--color-dark-50'),
           100: withOpacity('--color-dark-100'),
@@ -34,7 +45,7 @@ export default {
           900: withOpacity('--color-dark-900'),
           950: withOpacity('--color-dark-950'),
         },
-        // Champagne light theme palette
+        // Champagne light theme palette (legacy, kept for compatibility)
         champagne: {
           50: withOpacity('--color-champagne-50'),
           100: withOpacity('--color-champagne-100'),
@@ -48,7 +59,7 @@ export default {
           900: withOpacity('--color-champagne-900'),
           950: withOpacity('--color-champagne-950'),
         },
-        // Accent - dynamic color scheme
+        // Accent - Emerald for Zen (dynamic via CSS variables)
         accent: {
           50: withOpacity('--color-accent-50'),
           100: withOpacity('--color-accent-100'),
@@ -106,7 +117,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Manrope', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Inter', 'Manrope', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['Urbanist', 'Inter', 'Manrope', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         'bento': '24px',
@@ -122,8 +134,11 @@ export default {
       boxShadow: {
         'glow': '0 0 20px rgba(var(--color-accent-500), 0.15)',
         'glow-lg': '0 0 40px rgba(var(--color-accent-500), 0.2)',
-        'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.2)',
+        'soft': '0 10px 40px -10px rgba(0, 0, 0, 0.08)',
+        'soft-lg': '0 20px 50px -15px rgba(0, 0, 0, 0.12)',
         'card': '0 4px 24px -4px rgba(0, 0, 0, 0.4)',
+        'nav': '0 -5px 20px rgba(0, 0, 0, 0.03)',
+        'zen-glow': '0 0 20px rgba(16, 185, 129, 0.3)',
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

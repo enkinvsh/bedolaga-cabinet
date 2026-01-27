@@ -70,15 +70,15 @@ export function useTheme() {
       }
       // If stored theme is disabled, use the enabled one
       if (stored && !enabled[stored]) {
-        return enabled.dark ? 'dark' : 'light'
+        return enabled.light ? 'light' : 'dark'
       }
       // Check system preference
       if (window.matchMedia('(prefers-color-scheme: light)').matches && enabled.light) {
         return 'light'
       }
     }
-    // Default to dark if enabled, otherwise light
-    return enabled.dark ? 'dark' : 'light'
+    // Default to light if enabled, otherwise dark
+    return enabled.light ? 'light' : 'dark'
   })
 
   // Fetch enabled themes on mount
@@ -88,7 +88,7 @@ export function useTheme() {
       setIsLoading(false)
       // If current theme is disabled, switch to enabled one
       if (!data[theme]) {
-        const newTheme = data.dark ? 'dark' : 'light'
+        const newTheme = data.light ? 'light' : 'dark'
         setThemeState(newTheme)
       }
     })
@@ -103,7 +103,7 @@ export function useTheme() {
           setEnabledThemes(data)
           // If current theme is now disabled, switch to enabled one
           if (!data[theme]) {
-            const newTheme = data.dark ? 'dark' : 'light'
+            const newTheme = data.light ? 'light' : 'dark'
             setThemeState(newTheme)
           }
         } catch {
@@ -123,7 +123,7 @@ export function useTheme() {
       setEnabledThemes(data)
       // If current theme is now disabled, switch to enabled one
       if (!data[theme]) {
-        const newTheme = data.dark ? 'dark' : 'light'
+        const newTheme = data.light ? 'light' : 'dark'
         setThemeState(newTheme)
       }
     }
@@ -138,7 +138,7 @@ export function useTheme() {
 
     // If current theme is disabled, switch to the enabled one
     if (!enabledThemes[theme]) {
-      const newTheme = enabledThemes.dark ? 'dark' : 'light'
+      const newTheme = enabledThemes.light ? 'light' : 'dark'
       if (newTheme !== theme) {
         setThemeState(newTheme)
         return // Will re-run with correct theme
@@ -204,7 +204,7 @@ export function useTheme() {
     fetchEnabledThemes().then((data) => {
       setEnabledThemes(data)
       if (!data[theme]) {
-        const newTheme = data.dark ? 'dark' : 'light'
+        const newTheme = data.light ? 'light' : 'dark'
         setThemeState(newTheme)
       }
     })

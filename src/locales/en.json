@@ -1,4 +1,72 @@
 {
+  "zen": {
+    "tabs": {
+      "flow": "Flow",
+      "plan": "Plan",
+      "menu": "Menu"
+    },
+    "hero": {
+      "title": "Unleash Your",
+      "titleAccent": "Creative Flow",
+      "subtitle": "No borders. No limits. Just create."
+    },
+    "btn_enable": "ENABLE",
+    "tap_to_start": "Tap to start",
+    "plan_renews": "Plan Renews",
+    "no_plan": "No active plan",
+    "choose_plan": "Choose Plan",
+    "tariff": {
+      "title": "Choose Your Plan",
+      "subtitle": "Select a plan that fits your needs",
+      "current": "Current",
+      "unlimited": "Unlimited",
+      "devices": "devices",
+      "servers": "servers",
+      "selectPeriod": "Select Period",
+      "yourBalance": "Your balance",
+      "purchase": "Purchase",
+      "insufficientBalance": "Insufficient balance. Please top up.",
+      "notAvailable": "Tariff selection is not available",
+      "success": "Purchase Complete!",
+      "successMessage": "Your subscription has been activated",
+      "needMore": "Need to top up",
+      "topUp": "Top Up Balance",
+      "free": "FREE"
+    },
+    "tariffModal": {
+      "selectPeriod": "Select Period",
+      "month1": "1 month",
+      "month3": "3 months",
+      "month6": "6 months",
+      "month12": "12 months",
+      "needMore": "Need to top up"
+    },
+    "need_help": "Need Help?",
+    "activities": "Activities",
+    "spin_win": "Spin & Win",
+    "active": "Active",
+    "setup": {
+      "title": "Setup Connection",
+      "subtitle": "One-time setup to unlock your flow.",
+      "autoAdd": "Auto-Add Config",
+      "hint": "Tap \"Auto-Add\" after installing the app"
+    },
+    "plan": {
+      "currentPlan": "Current Plan",
+      "expiresOn": "Expires on",
+      "extend": "Extend",
+      "paymentMethods": "Payment Methods",
+      "offline": "Offline",
+      "day": "Day",
+      "month": "Month",
+      "trial": "Trial"
+    },
+    "access": {
+      "title": "Access Required",
+      "subtitle": "Activate your subscription\nto unleash the flow.",
+      "activate": "Activate"
+    }
+  },
   "common": {
     "loading": "Loading...",
     "error": "Error",

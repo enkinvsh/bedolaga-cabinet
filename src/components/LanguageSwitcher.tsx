@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useState, useRef, useEffect } from 'react'
+import { triggerHapticFeedback } from '../hooks/useBackButton'
 
 const languages = [
   { code: 'ru', name: 'RU', flag: '🇷🇺', fullName: 'Русский' },
@@ -26,13 +27,12 @@ export default function LanguageSwitcher() {
   }, [])
 
   const changeLanguage = (code: string) => {
+    triggerHapticFeedback('light')
     i18n.changeLanguage(code)
-    // Set document direction for RTL languages
     document.documentElement.dir = code === 'fa' ? 'rtl' : 'ltr'
     setIsOpen(false)
   }
 
-  // Set initial direction on mount
   useEffect(() => {
     document.documentElement.dir = i18n.language === 'fa' ? 'rtl' : 'ltr'
   }, [i18n.language])
@@ -40,36 +40,33 @@ export default function LanguageSwitcher() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-1.5 px-2.5 py-2 rounded-xl border border-dark-700/50 hover:border-dark-600 bg-dark-800/50 hover:bg-dark-700 transition-all text-sm"
+        onClick={() => {
+          triggerHapticFeedback('light')
+          setIsOpen(!isOpen)
+        }}
+        className="px-3 py-1.5 rounded-full bg-zen-sub/10 text-zen-sub border border-zen-sub/20 text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-1.5 hover:bg-zen-sub/15 transition-colors z-10"
         aria-label="Change language"
       >
-        <span>{currentLang.flag}</span>
-        <span className="font-medium text-dark-200">{currentLang.name}</span>
-        <svg
-          className={`w-3.5 h-3.5 text-dark-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
         </svg>
+        {currentLang.name}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-40 bg-dark-800 rounded-xl shadow-lg border border-dark-700/50 py-1 z-50 animate-fade-in">
+        <div className="absolute left-0 mt-2 w-36 zen-card rounded-xl shadow-lg py-1 z-50 animate-fade-in">
           {languages.map((lang) => (
             <button
               key={lang.code}
               onClick={() => changeLanguage(lang.code)}
               className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                 lang.code === i18n.language
-                  ? 'bg-accent-500/10 text-accent-400'
-                  : 'text-dark-300 hover:bg-dark-700/50'
+                  ? 'bg-zen-accent/10 text-zen-accent'
+                  : 'text-zen-sub hover:bg-zen-accent/5 hover:text-zen-text'
               }`}
             >
               <span>{lang.flag}</span>
-              <span>{lang.fullName}</span>
+              <span className="font-medium">{lang.fullName}</span>
             </button>
           ))}
         </div>
