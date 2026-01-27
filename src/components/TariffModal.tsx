@@ -205,30 +205,30 @@ export default function TariffModal({ tariff, onClose }: TariffModalProps) {
           {/* Daily Tariff Content */}
           {isDaily ? (
             <>
-              <div className="mb-6 p-4 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/50">
+              <div className="mb-6 p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="p-2 bg-amber-100 dark:bg-amber-900/30 rounded-xl text-amber-600 dark:text-amber-400">
+                  <div className="text-amber-600 dark:text-amber-400">
                     <SunIcon />
                   </div>
                   <div>
-                    <p className="font-medium text-zen-text">
-                      {t('subscription.dailyPurchase.costPerDay', 'Cost per day')}
-                    </p>
-                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
-                      {formatPrice(dailyPrice)}
-                    </p>
+                    <p className="font-medium text-slate-900 dark:text-zen-text">{formatPrice(dailyPrice)}</p>
+                    <p className="text-xs text-slate-500 dark:text-zen-sub">Стоимость в день</p>
                   </div>
                 </div>
-                <ul className="space-y-1 text-sm text-zen-sub">
-                  <li className="flex items-center gap-2">
-                    <CheckIcon />
-                    {t('subscription.dailyPurchase.chargedDaily', 'Payment is charged daily from balance')}
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckIcon />
-                    {t('subscription.dailyPurchase.canPause', 'Can be paused at any time')}
-                  </li>
+                
+                <ul className="space-y-2 text-sm text-slate-600 dark:text-zen-sub">
+                  <li>• Списывается ежедневно с баланса</li>
+                  <li>• Можно приостановить в любой момент</li>
                 </ul>
+              </div>
+              
+              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl mb-6">
+                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                  💡 Рекомендуем пополнить: 200 ₽
+                </p>
+                <p className="text-xs text-slate-500 dark:text-zen-sub mt-1">
+                  Хватит примерно на {Math.floor(20000 / dailyPrice)} дней
+                </p>
               </div>
 
               <div className="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">

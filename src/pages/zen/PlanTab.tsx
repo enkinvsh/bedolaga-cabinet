@@ -307,6 +307,15 @@ export default function PlanTab() {
                           )}
                         </div>
                       </div>
+                      
+                      {isDaily && (tariff as unknown as { daily_price_kopeks?: number }).daily_price_kopeks && (
+                        <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded-lg">
+                          <span className="text-amber-600 dark:text-amber-400 text-xs">☀</span>
+                          <span className="font-bold text-amber-600 dark:text-amber-400 text-sm">
+                            {((tariff as unknown as { daily_price_kopeks?: number }).daily_price_kopeks! / 100).toLocaleString('ru-RU')} ₽/день
+                          </span>
+                        </div>
+                      )}
                     </button>
                   )
                 })}
