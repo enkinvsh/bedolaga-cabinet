@@ -34,7 +34,7 @@ const ChevronRightIcon = () => (
 )
 
 export default function FlowTab() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [showConnectionModal, setShowConnectionModal] = useState(false)
 
@@ -119,7 +119,8 @@ export default function FlowTab() {
   const formatExpiryDate = (dateStr: string | undefined) => {
     if (!dateStr) return '-'
     const date = new Date(dateStr)
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    const locale = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
+    return date.toLocaleDateString(locale, { month: 'short', day: 'numeric' })
   }
 
   const showActivities = wheelConfig?.is_enabled || (contestsCount && contestsCount.count > 0)
