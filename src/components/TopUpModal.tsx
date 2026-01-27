@@ -226,7 +226,7 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
             {getMethodIcon(method.id)}
           </div>
           <div className="flex-1">
-            <h3 className="font-display text-xl font-bold text-zen-text">{methodName}</h3>
+            <h3 className="font-display text-xl font-medium text-zen-text">{methodName}</h3>
             <p className="text-sm text-zen-sub">
               {formatRubles(minRubles)} – {formatRubles(maxRubles)} ₽
             </p>

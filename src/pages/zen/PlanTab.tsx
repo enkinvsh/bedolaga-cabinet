@@ -337,7 +337,7 @@ export default function PlanTab() {
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${getMethodColor(method.id)}`}>
                       {getMethodIcon(method.id)}
                     </div>
-                    <span className="font-bold text-zen-text">
+                    <span className="font-medium text-zen-text">
                       {displayName}
                     </span>
                   </div>
