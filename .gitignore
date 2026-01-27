@@ -46,3 +46,4 @@ miniapp/
 
 # AI & Agents context
 .ai/
+.sisyphus/
