@@ -117,8 +117,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'Manrope', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
-        display: ['Urbanist', 'Inter', 'Manrope', 'system-ui', 'sans-serif'],
+        sans: ['Helvetica Neue', 'Inter', 'Manrope', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+        display: ['Helvetica Neue', 'Urbanist', 'Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: {
         'bento': '24px',
