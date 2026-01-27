@@ -29,10 +29,8 @@ export default function ZenLayout({ children }: ZenLayoutProps) {
     if (!subscription || !isActive) {
       return { label: t('zen.plan.offline', 'Offline'), isOnline: false }
     }
-    if (subscription.servers && subscription.servers.length > 0) {
-      return { label: subscription.servers[0].name, isOnline: true }
-    }
-    return { label: subscription.tariff_name || 'VPN', isOnline: true }
+    const tariffName = subscription.tariff_name || subscription.servers?.[0]?.name || 'VPN'
+    return { label: tariffName, isOnline: true }
   }
   
   const statusInfo = getStatusInfo()
