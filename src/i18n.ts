@@ -20,7 +20,7 @@ i18n
   .init({
     resources,
     fallbackLng: 'ru',
-    supportedLngs: ['ru', 'en', 'zh', 'fa'],
+    supportedLngs: ['ru', 'en'],
 
     detection: {
       order: ['localStorage', 'navigator'],
@@ -36,5 +36,11 @@ i18n
       useSuspense: false,
     },
   })
+
+const currentLang = localStorage.getItem('cabinet_language')
+if (currentLang === 'zh' || currentLang === 'fa') {
+  localStorage.setItem('cabinet_language', 'en')
+  i18n.changeLanguage('en')
+}
 
 export default i18n
