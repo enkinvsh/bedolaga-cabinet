@@ -24,13 +24,21 @@ export default function ZenLayout({ children }: ZenLayoutProps) {
   })
 
   const isActive = subscription?.is_active && (subscription?.status === 'active' || subscription?.status === 'trial')
+  const isTrial = subscription?.is_trial || subscription?.status === 'trial'
+  const isTrialExpired = subscription?.is_trial && !subscription?.is_active
   
   const getStatusInfo = () => {
-    if (!subscription || !isActive) {
-      return { label: t('zen.plan.offline', 'Offline'), isOnline: false }
+    if (isTrialExpired) {
+      return { label: t('zen.status.trialExpired', 'TRIAL EXPIRED'), isOnline: false, isTrial: true }
     }
-    const tariffName = subscription.tariff_name || subscription.servers?.[0]?.name || 'VPN'
-    return { label: tariffName, isOnline: true }
+    if (isTrial && isActive) {
+      return { label: t('zen.status.trial', 'TRIAL'), isOnline: true, isTrial: true }
+    }
+    if (!subscription || !isActive) {
+      return { label: t('zen.status.free', 'FREE'), isOnline: false, isTrial: false }
+    }
+    const tariffName = subscription.tariff_name || 'PRO ACCESS'
+    return { label: tariffName, isOnline: true, isTrial: false }
   }
   
   const statusInfo = getStatusInfo()
@@ -48,11 +56,19 @@ export default function ZenLayout({ children }: ZenLayoutProps) {
         </h1>
         
         <div className={`ml-auto px-3 py-1.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider flex items-center gap-2 border z-10 ${
-          statusInfo.isOnline 
-            ? 'bg-zen-accent/10 text-zen-accent border-zen-accent/20' 
-            : 'bg-red-500/10 text-red-500 border-red-500/20'
+          statusInfo.isTrial
+            ? statusInfo.isOnline
+              ? 'bg-amber-500/10 text-amber-500 border-amber-500/20'
+              : 'bg-red-500/10 text-red-500 border-red-500/20'
+            : statusInfo.isOnline 
+              ? 'bg-zen-accent/10 text-zen-accent border-zen-accent/20' 
+              : 'bg-slate-500/10 text-slate-500 border-slate-500/20'
         }`}>
-          <div className={`w-1.5 h-1.5 rounded-full ${statusInfo.isOnline ? 'bg-zen-accent' : 'bg-red-500'} animate-pulse`} />
+          <div className={`w-1.5 h-1.5 rounded-full ${
+            statusInfo.isTrial
+              ? statusInfo.isOnline ? 'bg-amber-500' : 'bg-red-500'
+              : statusInfo.isOnline ? 'bg-zen-accent' : 'bg-slate-500'
+          } animate-pulse`} />
           {statusInfo.label}
         </div>
       </header>

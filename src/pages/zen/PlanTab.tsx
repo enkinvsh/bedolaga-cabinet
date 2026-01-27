@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { subscriptionApi } from '../../api/subscription'
 import { balanceApi } from '../../api/balance'
@@ -105,26 +104,15 @@ export default function PlanTab() {
   const shouldShowTariffs = !subscription?.is_active || isTrial
   const isTariffsMode = purchaseOptions?.sales_mode === 'tariffs'
   const tariffs = isTariffsMode ? (purchaseOptions as TariffsPurchaseOptions).tariffs : []
-  
-  const maxTierLevel = tariffs.length > 0 ? Math.max(...tariffs.map(t => t.tier_level)) : 0
-  const currentTierLevel = subscription?.tariff_id 
-    ? tariffs.find(t => t.id === subscription.tariff_id)?.tier_level || 0
-    : 0
-  const canUpgrade = currentTierLevel < maxTierLevel
 
-  const getConnectionName = () => {
-    if (!subscription || !isActive) {
-      return t('zen.plan.offline', 'Offline')
-    }
-    if (subscription.servers && subscription.servers.length > 0) {
-      return subscription.servers[0].name
-    }
-    return 'VPN'
+  const getTariffName = () => {
+    if (isTrial) return t('zen.plan.trial', 'Trial')
+    if (!subscription?.tariff_id || !isTariffsMode) return 'Classic'
+    const tariff = tariffs.find(t => t.id === subscription.tariff_id)
+    return tariff?.name || 'Classic'
   }
 
-  const handleExtend = () => {
-    triggerHapticFeedback('light')
-  }
+  const tariffName = getTariffName()
 
   const handleMethodClick = (method: PaymentMethod) => {
     if (!method.is_available) return
@@ -146,7 +134,7 @@ export default function PlanTab() {
 
   return (
     <div className="space-y-6 fade-in">
-      {isActive && (
+      {isActive && !isTrial && (
         <div 
           className="w-full rounded-3xl p-6 bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-glow relative overflow-hidden cursor-pointer btn-press"
           onClick={() => {
@@ -165,7 +153,7 @@ export default function PlanTab() {
                 {isLoading ? (
                   <div className="h-9 w-32 bg-white/20 rounded mt-1 animate-pulse" />
                 ) : (
-                  <h2 className="text-3xl font-extrabold mt-1">{getConnectionName()}</h2>
+                  <h2 className="text-3xl font-extrabold mt-1">{tariffName}</h2>
                 )}
                 {isTrial && (
                   <span className="inline-block mt-2 px-2 py-0.5 bg-white/20 rounded-full text-xs font-medium">
@@ -197,27 +185,15 @@ export default function PlanTab() {
                   </p>
                 )}
               </div>
-              <div className="flex gap-2">
-                <Link
-                  to="/subscription"
-                  onClick={handleExtend}
-                  className="bg-white text-emerald-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm btn-press hover:bg-white/90 transition-colors"
-                >
-                  {t('zen.plan.extend', 'Extend')}
-                </Link>
-                {canUpgrade && (
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      triggerHapticFeedback('light')
-                      setShowPlanModal(true)
-                    }}
-                    className="bg-white text-emerald-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm btn-press hover:bg-white/90 transition-colors"
-                  >
-                    {t('zen.plan.upgrade', 'Upgrade')}
-                  </button>
-                )}
-              </div>
+              <button
+                onClick={() => {
+                  triggerHapticFeedback('light')
+                  setShowPlanModal(true)
+                }}
+                className="bg-white text-emerald-600 px-4 py-2 rounded-xl font-bold text-sm shadow-sm btn-press hover:bg-white/90 transition-colors"
+              >
+                {t('zen.plan.managePlan', 'Manage Plan')}
+              </button>
             </div>
           </div>
         </div>

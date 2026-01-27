@@ -1,16 +1,17 @@
-import { useState, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query'
 import { subscriptionApi } from '../api/subscription'
 import { balanceApi } from '../api/balance'
 import { triggerHapticFeedback, triggerHapticNotification } from '../hooks/useBackButton'
-import type { Tariff, TariffPeriod } from '../types'
+import ZenModal from './ui/ZenModal'
 import TopUpModal from './TopUpModal'
+import type { Tariff, TariffPeriod } from '../types'
 
 interface TariffModalProps {
   tariff: Tariff
   onClose: () => void
+  onPurchaseSuccess?: () => void
 }
 
 const InfinityIcon = () => (
@@ -31,17 +32,28 @@ const SunIcon = () => (
   </svg>
 )
 
-export default function TariffModal({ tariff, onClose }: TariffModalProps) {
+const BackIcon = () => (
+  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+  </svg>
+)
+
+const SuccessIcon = () => (
+  <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+  </svg>
+)
+
+export default function TariffModal({ tariff, onClose, onPurchaseSuccess }: TariffModalProps) {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
-  const [isVisible, setIsVisible] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState<TariffPeriod | null>(
     tariff.periods.length > 0 ? tariff.periods[0] : null
   )
   const [showTopUp, setShowTopUp] = useState(false)
   const [missingAmount, setMissingAmount] = useState(0)
+  const [purchaseComplete, setPurchaseComplete] = useState(false)
 
-  // Check if this is a daily tariff
   const isDaily = tariff.is_daily || tariff.periods.length === 0
 
   const { data: balanceData } = useQuery({
@@ -58,41 +70,28 @@ export default function TariffModal({ tariff, onClose }: TariffModalProps) {
 
   const balance = balanceData?.balance_kopeks || 0
 
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 10)
-    return () => clearTimeout(timer)
-  }, [])
-
-  const handleClose = useCallback(() => {
-    setIsVisible(false)
-    setTimeout(onClose, 300)
-  }, [onClose])
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        handleClose()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [handleClose])
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
-
   const purchaseMutation = useMutation({
     mutationFn: ({ tariffId, periodDays }: { tariffId: number; periodDays: number }) =>
       subscriptionApi.purchaseTariff(tariffId, periodDays),
-    onSuccess: () => {
+    onSuccess: async () => {
       triggerHapticNotification('success')
-      queryClient.invalidateQueries({ queryKey: ['user-subscription'] })
+      
+      await queryClient.refetchQueries({ 
+        queryKey: ['user-subscription'],
+        type: 'all'
+      })
+      
       queryClient.invalidateQueries({ queryKey: ['user-balance'] })
       queryClient.invalidateQueries({ queryKey: ['purchase-options'] })
-      handleClose()
+      
+      setPurchaseComplete(true)
+      setTimeout(() => {
+        if (onPurchaseSuccess) {
+          onPurchaseSuccess()
+        } else {
+          onClose()
+        }
+      }, 1500)
     },
     onError: () => {
       triggerHapticNotification('error')
@@ -101,7 +100,6 @@ export default function TariffModal({ tariff, onClose }: TariffModalProps) {
 
   const handlePurchase = () => {
     if (isDaily) {
-      // For daily tariff, we need at least daily price in balance
       const dailyPrice = (tariff as unknown as { daily_price_kopeks?: number }).daily_price_kopeks || 0
       if (balance < dailyPrice) {
         const missing = (dailyPrice - balance) / 100
@@ -161,206 +159,214 @@ export default function TariffModal({ tariff, onClose }: TariffModalProps) {
     )
   }
 
-  const modalContent = (
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center">
-      <div 
-        className={`absolute inset-0 zen-modal-backdrop transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-        onClick={handleClose}
-      />
-      
-      <div
-        className={`w-full max-w-[430px] bg-zen-card rounded-t-[2.5rem] p-8 transform transition-transform duration-300 relative ${
-          isVisible ? 'translate-y-0' : 'translate-y-full'
-        }`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="w-12 h-1.5 bg-zen-sub/30 rounded-full mx-auto mb-6" />
+  if (purchaseComplete) {
+    return (
+      <ZenModal isOpen={true} onClose={() => {}}>
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <SuccessIcon />
+          </div>
+          <h3 className="text-xl font-bold text-zen-text mb-2">
+            {t('zen.purchase.success', 'Purchase Complete!')}
+          </h3>
+          <p className="text-zen-sub">
+            {t('zen.purchase.activated', 'Your plan is now active')}
+          </p>
+        </div>
+      </ZenModal>
+    )
+  }
 
-        <div className="flex items-start justify-between mb-6">
-          <div>
-              <h2 className="font-display text-2xl font-bold text-zen-text">{tariff.name}</h2>
-              <div className="flex items-center gap-2 mt-1">
-                {tariff.is_unlimited_traffic ? (
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
-                    <InfinityIcon />
-                    <span className="text-sm">{t('zen.tariff.unlimited', 'Unlimited')}</span>
-                  </span>
-                ) : (
-                  <span className="text-zen-sub text-sm">
-                    {tariff.traffic_limit_gb} GB
-                  </span>
-                )}
-                <span className="text-zen-sub text-sm">
-                  {tariff.device_limit} {t('zen.tariff.devices', 'devices')}
-                </span>
+  return (
+    <ZenModal isOpen={true} onClose={onClose}>
+      <button
+        onClick={onClose}
+        className="flex items-center gap-1 text-sm text-zen-sub hover:text-zen-text mb-4 -mt-2 btn-press"
+      >
+        <BackIcon />
+        {t('common.back', 'Back')}
+      </button>
+
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h2 className="font-display text-2xl font-bold text-zen-text">{tariff.name}</h2>
+          <div className="flex items-center gap-2 mt-1">
+            {tariff.is_unlimited_traffic ? (
+              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-medium">
+                <InfinityIcon />
+                <span className="text-sm">{t('zen.tariff.unlimited', 'Unlimited')}</span>
+              </span>
+            ) : (
+              <span className="text-zen-sub text-sm">
+                {tariff.traffic_limit_gb} GB
+              </span>
+            )}
+            <span className="text-zen-sub text-sm">
+              {tariff.device_limit} {t('zen.tariff.devices', 'devices')}
+            </span>
+          </div>
+        </div>
+        {tariff.tier_level >= 3 && tariff.is_unlimited_traffic && (
+          <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">
+            PRO
+          </div>
+        )}
+      </div>
+
+      {isDaily ? (
+        <>
+          <div className="mb-6 p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="text-amber-600 dark:text-amber-400">
+                <SunIcon />
+              </div>
+              <div>
+                <p className="font-medium text-slate-900 dark:text-zen-text">{formatPrice(dailyPrice)}</p>
+                <p className="text-xs text-slate-500 dark:text-zen-sub">Стоимость в день</p>
               </div>
             </div>
-            {tariff.tier_level >= 3 && tariff.is_unlimited_traffic && (
-              <div className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full text-xs font-bold">
-                PRO
-              </div>
+            
+            <ul className="space-y-2 text-sm text-slate-600 dark:text-zen-sub">
+              <li>• Списывается ежедневно с баланса</li>
+              <li>• Можно приостановить в любой момент</li>
+            </ul>
+          </div>
+          
+          <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl mb-6">
+            <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+              💡 Рекомендуем пополнить: 200 ₽
+            </p>
+            <p className="text-xs text-slate-500 dark:text-zen-sub mt-1">
+              Хватит примерно на {Math.floor(20000 / dailyPrice)} дней
+            </p>
+          </div>
+
+          <div className="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+            <div className="flex justify-between items-center">
+              <span className="text-zen-sub text-sm">{t('zen.tariff.yourBalance', 'Your balance')}</span>
+              <span className={`font-bold ${dailyInsufficientBalance ? 'text-red-500' : 'text-zen-text'}`}>
+                {formatPrice(balance)}
+              </span>
+            </div>
+            {dailyInsufficientBalance && (
+              <p className="text-xs text-red-500 mt-2">
+                {t('zen.tariffModal.needMore', 'Need to top up')}: {formatPrice(dailyPrice - balance)}
+              </p>
             )}
           </div>
 
-          {/* Daily Tariff Content */}
-          {isDaily ? (
-            <>
-              <div className="mb-6 p-5 rounded-2xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800/30">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="text-amber-600 dark:text-amber-400">
-                    <SunIcon />
-                  </div>
-                  <div>
-                    <p className="font-medium text-slate-900 dark:text-zen-text">{formatPrice(dailyPrice)}</p>
-                    <p className="text-xs text-slate-500 dark:text-zen-sub">Стоимость в день</p>
-                  </div>
-                </div>
-                
-                <ul className="space-y-2 text-sm text-slate-600 dark:text-zen-sub">
-                  <li>• Списывается ежедневно с баланса</li>
-                  <li>• Можно приостановить в любой момент</li>
-                </ul>
-              </div>
-              
-              <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl mb-6">
-                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                  💡 Рекомендуем пополнить: 200 ₽
-                </p>
-                <p className="text-xs text-slate-500 dark:text-zen-sub mt-1">
-                  Хватит примерно на {Math.floor(20000 / dailyPrice)} дней
-                </p>
-              </div>
-
-              <div className="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                <div className="flex justify-between items-center">
-                  <span className="text-zen-sub text-sm">{t('zen.tariff.yourBalance', 'Your balance')}</span>
-                  <span className={`font-bold ${dailyInsufficientBalance ? 'text-red-500' : 'text-zen-text'}`}>
-                    {formatPrice(balance)}
-                  </span>
-                </div>
-                {dailyInsufficientBalance && (
-                  <p className="text-xs text-red-500 mt-2">
-                    {t('zen.tariffModal.needMore', 'Need to top up')}: {formatPrice(dailyPrice - balance)}
-                  </p>
-                )}
-              </div>
-
-              {dailyInsufficientBalance ? (
-                <button
-                  onClick={handleTopUp}
-                  className="w-full py-4 rounded-2xl font-bold text-lg transition-all btn-press bg-gradient-to-r from-emerald-400 to-teal-600 text-white shadow-glow"
-                >
-                  {t('zen.tariff.topUp', 'Top Up Balance')}
-                </button>
-              ) : (
-                <button
-                  onClick={handlePurchase}
-                  disabled={purchaseMutation.isPending}
-                  className="w-full py-4 rounded-2xl font-bold text-lg transition-all btn-press bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg disabled:opacity-50"
-                >
-                  {purchaseMutation.isPending ? (
-                    <div className="flex items-center justify-center gap-2">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  ) : (
-                    t('subscription.dailyPurchase.activate', 'Activate for {{price}}').replace('{{price}}', formatPrice(dailyPrice))
-                  )}
-                </button>
-              )}
-            </>
+          {dailyInsufficientBalance ? (
+            <button
+              onClick={handleTopUp}
+              className="w-full py-4 rounded-2xl font-bold text-lg transition-all btn-press bg-gradient-to-r from-emerald-400 to-teal-600 text-white shadow-glow"
+            >
+              {t('zen.tariff.topUp', 'Top Up Balance')}
+            </button>
           ) : (
-            /* Period Tariff Content */
-            <>
-              <div className="mb-6">
-                <p className="text-xs font-bold text-zen-sub uppercase tracking-widest mb-3">
-                  {t('zen.tariffModal.selectPeriod', 'Select Period')}
-                </p>
-                <div className="space-y-2">
-                  {tariff.periods.map((period) => {
-                    const isSelected = selectedPeriod?.days === period.days
-                    return (
-                      <button
-                        key={period.days}
-                        onClick={() => {
-                          triggerHapticFeedback('light')
-                          setSelectedPeriod(period)
-                        }}
-                        className={`w-full p-4 rounded-2xl flex items-center justify-between transition-all ${
-                          isSelected
-                            ? 'bg-emerald-50 dark:bg-emerald-900/20 ring-2 ring-emerald-500'
-                            : 'bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                            isSelected 
-                              ? 'bg-emerald-500 text-white' 
-                              : 'border-2 border-slate-300 dark:border-slate-600'
-                          }`}>
-                            {isSelected && <CheckIcon />}
-                          </div>
-                          <div className="text-left">
-                            <p className="font-medium text-zen-text">{getPeriodLabel(period)}</p>
-                            {period.discount_percent && period.discount_percent > 0 && (
-                              <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                -{period.discount_percent}%
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-medium text-zen-text">{formatPrice(period.price_kopeks)}</p>
-                          {period.original_price_kopeks && period.original_price_kopeks > period.price_kopeks && (
-                            <p className="text-xs text-zen-sub line-through">
-                              {formatPrice(period.original_price_kopeks)}
-                            </p>
-                          )}
-                        </div>
-                      </button>
-                    )
-                  })}
+            <button
+              onClick={handlePurchase}
+              disabled={purchaseMutation.isPending}
+              className="w-full py-4 rounded-2xl font-bold text-lg transition-all btn-press bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow-lg disabled:opacity-50"
+            >
+              {purchaseMutation.isPending ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 </div>
-              </div>
-
-              {selectedPeriod && (
-                <div className="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-                  <div className="flex justify-between items-center">
-                    <span className="text-zen-sub text-sm">{t('zen.tariff.yourBalance', 'Your balance')}</span>
-                    <span className={`font-bold ${insufficientBalance ? 'text-red-500' : 'text-zen-text'}`}>
-                      {formatPrice(balance)}
-                    </span>
-                  </div>
-                  {insufficientBalance && (
-                    <p className="text-xs text-red-500 mt-2">
-                      {t('zen.tariffModal.needMore', 'Need to top up')}: {formatPrice(selectedPeriod.price_kopeks - balance)}
-                    </p>
-                  )}
-                </div>
+              ) : (
+                t('subscription.dailyPurchase.activate', 'Activate for {{price}}').replace('{{price}}', formatPrice(dailyPrice))
               )}
-
-              <button
-                onClick={insufficientBalance ? handleTopUp : handlePurchase}
-                disabled={!selectedPeriod || purchaseMutation.isPending}
-                className="w-full py-4 rounded-2xl font-bold text-lg transition-all btn-press bg-gradient-to-r from-emerald-400 to-teal-600 text-white shadow-glow disabled:opacity-50"
-              >
-                {purchaseMutation.isPending ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  </div>
-                ) : insufficientBalance ? (
-                  t('zen.tariff.topUp', 'Top Up Balance')
-                ) : (
-                  <>
-                    {t('zen.tariff.purchase', 'Purchase')}
-                    {selectedPeriod && ` ${formatPrice(selectedPeriod.price_kopeks)}`}
-                  </>
-                )}
-              </button>
-            </>
+            </button>
           )}
-      </div>
-    </div>
-  )
+        </>
+      ) : (
+        <>
+          <div className="mb-6">
+            <p className="text-xs font-bold text-zen-sub uppercase tracking-widest mb-3">
+              {t('zen.tariffModal.selectPeriod', 'Select Period')}
+            </p>
+            <div className="space-y-2">
+              {tariff.periods.map((period) => {
+                const isSelected = selectedPeriod?.days === period.days
+                return (
+                  <button
+                    key={period.days}
+                    onClick={() => {
+                      triggerHapticFeedback('light')
+                      setSelectedPeriod(period)
+                    }}
+                    className={`w-full p-4 rounded-2xl flex items-center justify-between transition-all ${
+                      isSelected
+                        ? 'bg-emerald-50 dark:bg-emerald-900/20 ring-2 ring-emerald-500'
+                        : 'bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                        isSelected 
+                          ? 'bg-emerald-500 text-white' 
+                          : 'border-2 border-slate-300 dark:border-slate-600'
+                      }`}>
+                        {isSelected && <CheckIcon />}
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium text-zen-text">{getPeriodLabel(period)}</p>
+                        {period.discount_percent && period.discount_percent > 0 && (
+                          <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                            -{period.discount_percent}%
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-medium text-zen-text">{formatPrice(period.price_kopeks)}</p>
+                      {period.original_price_kopeks && period.original_price_kopeks > period.price_kopeks && (
+                        <p className="text-xs text-zen-sub line-through">
+                          {formatPrice(period.original_price_kopeks)}
+                        </p>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
 
-  return createPortal(modalContent, document.body)
+          {selectedPeriod && (
+            <div className="mb-6 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/50">
+              <div className="flex justify-between items-center">
+                <span className="text-zen-sub text-sm">{t('zen.tariff.yourBalance', 'Your balance')}</span>
+                <span className={`font-bold ${insufficientBalance ? 'text-red-500' : 'text-zen-text'}`}>
+                  {formatPrice(balance)}
+                </span>
+              </div>
+              {insufficientBalance && (
+                <p className="text-xs text-red-500 mt-2">
+                  {t('zen.tariffModal.needMore', 'Need to top up')}: {formatPrice(selectedPeriod.price_kopeks - balance)}
+                </p>
+              )}
+            </div>
+          )}
+
+          <button
+            onClick={insufficientBalance ? handleTopUp : handlePurchase}
+            disabled={!selectedPeriod || purchaseMutation.isPending}
+            className="w-full py-4 rounded-2xl font-bold text-lg transition-all btn-press bg-gradient-to-r from-emerald-400 to-teal-600 text-white shadow-glow disabled:opacity-50"
+          >
+            {purchaseMutation.isPending ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : insufficientBalance ? (
+              t('zen.tariff.topUp', 'Top Up Balance')
+            ) : (
+              <>
+                {t('zen.tariff.purchase', 'Purchase')}
+                {selectedPeriod && ` ${formatPrice(selectedPeriod.price_kopeks)}`}
+              </>
+            )}
+          </button>
+        </>
+      )}
+    </ZenModal>
+  )
 }

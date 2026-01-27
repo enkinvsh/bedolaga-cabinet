@@ -41,6 +41,10 @@
       "month12": "12 months",
       "needMore": "Need to top up"
     },
+    "purchase": {
+      "success": "Purchase Complete!",
+      "activated": "Your plan is now active"
+    },
     "need_help": "Need Help?",
     "activities": "Activities",
     "spin_win": "Spin & Win",
@@ -59,12 +63,44 @@
       "offline": "Offline",
       "day": "Day",
       "month": "Month",
-      "trial": "Trial"
+      "trial": "Trial",
+      "managePlan": "Manage"
+    },
+    "manage": {
+      "title": "Manage Plan",
+      "expiresOn": "Active until",
+      "current": "Current",
+      "recommended": "Recommended",
+      "legacyTitle": "Choose a new plan",
+      "legacyDesc": "Your subscription was created before tariffs. Select a plan to continue after expiry.",
+      "balance": "Balance",
+      "days": "days",
+      "topUp": "Top Up Balance",
+      "orUpgrade": "or switch to monthly",
+      "savingsHint": "Save up to 40% with a monthly plan",
+      "renew": "Renew",
+      "bestPlan": "You're on our best plan",
+      "perDay": "/day",
+      "perMonth": "/month"
     },
     "access": {
       "title": "Access Required",
       "subtitle": "Activate trial subscription\nto unlock the flow.",
       "activate": "Activate"
+    },
+    "status": {
+      "trial": "TRIAL",
+      "trialExpired": "EXPIRED",
+      "free": "FREE"
+    },
+    "trial": {
+      "title": "Try Premium Free",
+      "days": "days",
+      "device": "device",
+      "devicesShort": "devices",
+      "activate": "Start Free Trial",
+      "noPayment": "No payment required",
+      "error": "Failed to activate. Please try again."
     }
   },
   "common": {

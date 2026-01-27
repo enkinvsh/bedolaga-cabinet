@@ -1,10 +1,10 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { subscriptionApi } from '../api/subscription'
 import { triggerHapticFeedback } from '../hooks/useBackButton'
+import ZenModal from './ui/ZenModal'
 import type { AppInfo, AppConfig } from '../types'
 
 interface ConnectionModalProps {
@@ -119,7 +119,6 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
   const navigate = useNavigate()
   const [selectedApp, setSelectedApp] = useState<AppInfo | null>(null)
   const [copied, setCopied] = useState(false)
-  const [isVisible, setIsVisible] = useState(false)
 
   const { data: appConfig, isLoading, error } = useQuery<AppConfig>({
     queryKey: ['appConfig'],
@@ -142,32 +141,6 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
     const app = apps.find(a => a.isFeatured) || apps[0]
     if (app) setSelectedApp(app)
   }, [appConfig, detectedPlatform, selectedApp])
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 10)
-    return () => clearTimeout(timer)
-  }, [])
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        handleClose()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
-
-  const handleClose = useCallback(() => {
-    setIsVisible(false)
-    setTimeout(onClose, 300)
-  }, [onClose])
 
   const copySubscriptionLink = async () => {
     if (!appConfig?.subscriptionUrl) return
@@ -214,115 +187,98 @@ export default function ConnectionModal({ onClose }: ConnectionModalProps) {
     window.open(downloadBtn.buttonLink, '_blank')
   }
 
+  const handleActivate = () => {
+    triggerHapticFeedback('light')
+    onClose()
+    navigate('/plan')
+  }
+
   const currentPlatformName = selectedApp ? platformNames[detectedPlatform || 'android'] : ''
 
-  const content = (
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center">
-      <div 
-        className={`absolute inset-0 zen-glass transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-        onClick={handleClose}
-      />
-      
-      <div 
-        className={`w-full max-w-[430px] bg-zen-card rounded-t-[2.5rem] p-8 transform transition-transform duration-300 relative ${
-          isVisible ? 'translate-y-0' : 'translate-y-full'
-        }`}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="w-12 h-1.5 bg-zen-sub/30 rounded-full mx-auto mb-6" />
-        
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="w-10 h-10 border-[3px] border-zen-accent/30 border-t-zen-accent rounded-full animate-spin" />
-          </div>
-        ) : error || !appConfig ? (
-          <div className="text-center py-8">
-            <p className="text-zen-sub text-lg mb-4">{t('common.error')}</p>
-            <button onClick={handleClose} className="px-6 py-2 bg-zen-accent text-white rounded-xl font-bold">
-              {t('common.close')}
-            </button>
-          </div>
-        ) : !appConfig.hasSubscription ? (
-          <div className="text-center py-8">
-            <h3 className="font-display text-2xl font-bold text-zen-text mb-3">
-              {t('zen.access.title', 'Access Required')}
-            </h3>
-            <p className="text-zen-sub mb-6 whitespace-pre-line">
-              {t('zen.access.subtitle', 'Activate your subscription to unleash the flow.')}
-            </p>
-            <button 
-              onClick={() => {
-                triggerHapticFeedback('light')
-                handleClose()
-                navigate('/plan')
-              }} 
-              className="w-full py-4 bg-gradient-to-r from-emerald-400 to-teal-600 text-white rounded-xl font-bold text-lg shadow-glow btn-press"
-            >
-              {t('zen.access.activate', 'Activate')}
-            </button>
-          </div>
-        ) : (
-          <>
-            <h3 className="font-display text-2xl font-bold text-zen-text mb-2">
-              {t('zen.setup.title', 'Setup Connection')}
-            </h3>
-            <p className="text-zen-sub text-sm mb-6 font-medium">
-              {t('zen.setup.subtitle', 'One-time setup to unlock your flow.')}
-            </p>
-            
-            {selectedApp && (
-              <div className="space-y-3 mb-8">
-                <button
-                  onClick={() => handleDownload(selectedApp)}
-                  className="w-full bg-zen-bg border border-zen-sub/10 p-4 rounded-2xl flex items-center gap-4 hover:bg-zen-sub/5 transition active:scale-[0.98] text-left"
-                >
-                  <div className={`w-10 h-10 rounded-xl ${platformColors[detectedPlatform || 'android']} text-white flex items-center justify-center`}>
-                    {getAppIcon(selectedApp.name)}
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-zen-text">{selectedApp.name}</h4>
-                    <p className="text-xs text-zen-sub">{currentPlatformName}</p>
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-white dark:bg-zen-card flex items-center justify-center text-zen-accent shadow-sm">
-                    <DownloadIcon />
-                  </div>
-                </button>
-              </div>
-            )}
-            
-            {selectedApp?.deepLink && (
+  return (
+    <ZenModal isOpen={true} onClose={onClose}>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="w-10 h-10 border-[3px] border-zen-accent/30 border-t-zen-accent rounded-full animate-spin" />
+        </div>
+      ) : error || !appConfig ? (
+        <div className="text-center py-8">
+          <p className="text-zen-sub text-lg mb-4">{t('common.error')}</p>
+          <button onClick={onClose} className="px-6 py-2 bg-zen-accent text-white rounded-xl font-bold">
+            {t('common.close')}
+          </button>
+        </div>
+      ) : !appConfig.hasSubscription ? (
+        <div className="text-center py-8">
+          <h3 className="font-display text-2xl font-bold text-zen-text mb-3">
+            {t('zen.access.title', 'Access Required')}
+          </h3>
+          <p className="text-zen-sub mb-6 whitespace-pre-line">
+            {t('zen.access.subtitle', 'Activate your subscription to unleash the flow.')}
+          </p>
+          <button 
+            onClick={handleActivate} 
+            className="w-full py-4 bg-gradient-to-r from-emerald-400 to-teal-600 text-white rounded-xl font-bold text-lg shadow-glow btn-press"
+          >
+            {t('zen.access.activate', 'Activate')}
+          </button>
+        </div>
+      ) : (
+        <>
+          <h3 className="font-display text-2xl font-bold text-zen-text mb-2">
+            {t('zen.setup.title', 'Setup Connection')}
+          </h3>
+          <p className="text-zen-sub text-sm mb-6 font-medium">
+            {t('zen.setup.subtitle', 'One-time setup to unlock your flow.')}
+          </p>
+          
+          {selectedApp && (
+            <div className="space-y-3 mb-8">
               <button
-                onClick={() => handleConnect(selectedApp)}
-                className="w-full py-4 bg-zen-text text-white dark:bg-zen-accent rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 btn-press mb-4 hover:opacity-90 transition-opacity"
+                onClick={() => handleDownload(selectedApp)}
+                className="w-full bg-zen-bg border border-zen-sub/10 p-4 rounded-2xl flex items-center gap-4 hover:bg-zen-sub/5 transition active:scale-[0.98] text-left"
               >
-                <MagicIcon />
-                <span>{t('zen.setup.autoAdd', 'Auto-Add Config')}</span>
+                <div className={`w-10 h-10 rounded-xl ${platformColors[detectedPlatform || 'android']} text-white flex items-center justify-center`}>
+                  {getAppIcon(selectedApp.name)}
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-zen-text">{selectedApp.name}</h4>
+                  <p className="text-xs text-zen-sub">{currentPlatformName}</p>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white dark:bg-zen-card flex items-center justify-center text-zen-accent shadow-sm">
+                  <DownloadIcon />
+                </div>
               </button>
-            )}
-            
+            </div>
+          )}
+          
+          {selectedApp?.deepLink && (
             <button
-              onClick={copySubscriptionLink}
-              className={`w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all mb-4 ${
-                copied
-                  ? 'bg-zen-accent/10 text-zen-accent border border-zen-accent/30'
-                  : 'bg-zen-sub/10 text-zen-sub hover:bg-zen-sub/20'
-              }`}
+              onClick={() => handleConnect(selectedApp)}
+              className="w-full py-4 bg-zen-text text-white dark:bg-zen-accent rounded-xl font-bold text-lg shadow-lg flex items-center justify-center gap-2 btn-press mb-4 hover:opacity-90 transition-opacity"
             >
-              {copied ? <CheckIcon /> : <CopyIcon />}
-              {copied ? t('subscription.connection.copied') : t('subscription.connection.copyLink')}
+              <MagicIcon />
+              <span>{t('zen.setup.autoAdd', 'Auto-Add Config')}</span>
             </button>
-            
-            <p className="text-center text-xs text-zen-sub font-medium">
-              {t('zen.setup.hint', 'Tap "Auto-Add" after installing the app')}
-            </p>
-          </>
-        )}
-      </div>
-    </div>
+          )}
+          
+          <button
+            onClick={copySubscriptionLink}
+            className={`w-full py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all mb-4 ${
+              copied
+                ? 'bg-zen-accent/10 text-zen-accent border border-zen-accent/30'
+                : 'bg-zen-sub/10 text-zen-sub hover:bg-zen-sub/20'
+            }`}
+          >
+            {copied ? <CheckIcon /> : <CopyIcon />}
+            {copied ? t('subscription.connection.copied') : t('subscription.connection.copyLink')}
+          </button>
+          
+          <p className="text-center text-xs text-zen-sub font-medium">
+            {t('zen.setup.hint', 'Tap "Auto-Add" after installing the app')}
+          </p>
+        </>
+      )}
+    </ZenModal>
   )
-
-  if (typeof document !== 'undefined') {
-    return createPortal(content, document.body)
-  }
-  return content
 }

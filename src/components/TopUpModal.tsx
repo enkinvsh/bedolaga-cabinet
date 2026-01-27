@@ -1,10 +1,10 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { createPortal } from 'react-dom'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMutation } from '@tanstack/react-query'
 import { balanceApi } from '../api/balance'
 import { triggerHapticFeedback, triggerHapticNotification } from '../hooks/useBackButton'
 import { checkRateLimit, getRateLimitResetTime, RATE_LIMIT_KEYS } from '../utils/rateLimit'
+import ZenModal from './ui/ZenModal'
 import type { PaymentMethod } from '../types'
 
 const TELEGRAM_LINK_REGEX = /^https?:\/\/t\.me\//i
@@ -80,7 +80,6 @@ interface TopUpModalProps {
 export default function TopUpModal({ method, onClose, initialAmountRubles }: TopUpModalProps) {
   const { t } = useTranslation()
   const inputRef = useRef<HTMLInputElement>(null)
-  const [isVisible, setIsVisible] = useState(false)
 
   const getInitialAmount = (): string => {
     if (!initialAmountRubles || initialAmountRubles <= 0) return ''
@@ -94,32 +93,6 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
   )
   const popupRef = useRef<Window | null>(null)
   const [isInputFocused, setIsInputFocused] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setIsVisible(true), 10)
-    return () => clearTimeout(timer)
-  }, [])
-
-  const handleClose = useCallback(() => {
-    setIsVisible(false)
-    setTimeout(onClose, 300)
-  }, [onClose])
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        handleClose()
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [handleClose])
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    return () => { document.body.style.overflow = '' }
-  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -206,155 +179,136 @@ export default function TopUpModal({ method, onClose, initialAmountRubles }: Top
   const isPending = topUpMutation.isPending || starsPaymentMutation.isPending
   const displayAmount = amount && parseFloat(amount) > 0 ? parseFloat(amount) : 0
 
-  const content = (
-    <div className="fixed inset-0 z-[9999] flex items-end justify-center">
-      <div 
-        className={`absolute inset-0 zen-glass transition-opacity duration-300 ${isVisible ? 'opacity-100' : 'opacity-0'}`}
-        onClick={handleClose}
-      />
-      
-      <div 
-        className={`w-full max-w-[430px] bg-zen-card rounded-t-[2.5rem] p-6 pb-8 transform transition-transform duration-300 relative ${
-          isVisible ? 'translate-y-0' : 'translate-y-full'
-        }`}
-        onClick={e => e.stopPropagation()}
-      >
-        <div className="w-12 h-1.5 bg-zen-sub/30 rounded-full mx-auto mb-6" />
-        
-        <div className="flex items-center gap-4 mb-6">
-          <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${getMethodColor(method.id)}`}>
-            {getMethodIcon(method.id)}
-          </div>
-          <div className="flex-1">
-            <h3 className="font-display text-xl font-medium text-zen-text">{methodName}</h3>
-            <p className="text-sm text-zen-sub">
-              {formatRubles(minRubles)} – {formatRubles(maxRubles)} ₽
-            </p>
-          </div>
+  return (
+    <ZenModal isOpen={true} onClose={onClose}>
+      <div className="flex items-center gap-4 mb-6">
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${getMethodColor(method.id)}`}>
+          {getMethodIcon(method.id)}
         </div>
-
-        {hasOptions && method.options && (
-          <div className="mb-5">
-            <label className="text-xs font-bold text-zen-sub uppercase tracking-widest mb-2 block">
-              {t('balance.paymentMethod', 'Payment option')}
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              {method.options.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => { setSelectedOption(opt.id); triggerHapticFeedback('light') }}
-                  className={`relative py-3 px-4 rounded-xl text-sm font-bold transition-all ${
-                    selectedOption === opt.id
-                      ? 'bg-zen-accent/10 text-zen-accent ring-2 ring-zen-accent/30'
-                      : 'bg-zen-bg text-zen-sub hover:bg-zen-sub/10 border border-zen-sub/10'
-                  }`}
-                >
-                  {opt.name}
-                  {selectedOption === opt.id && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-zen-accent" />
-                  )}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="mb-4">
-          <label className="text-xs font-bold text-zen-sub uppercase tracking-widest mb-2 block">
-            {t('balance.enterAmount', 'Amount')}
-          </label>
-          <div className={`relative rounded-2xl transition-all ${
-            isInputFocused
-              ? 'ring-2 ring-zen-accent/50 bg-zen-bg'
-              : 'bg-zen-bg border border-zen-sub/10'
-          }`}>
-            <input
-              ref={inputRef}
-              type="number"
-              inputMode="decimal"
-              enterKeyHint="done"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              onFocus={() => setIsInputFocused(true)}
-              onBlur={() => setIsInputFocused(false)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit() } }}
-              placeholder="0"
-              className="w-full h-14 px-5 pr-14 text-2xl font-bold bg-transparent text-zen-text placeholder:text-zen-sub/50 focus:outline-none"
-              autoComplete="off"
-            />
-            <span className="absolute right-5 top-1/2 -translate-y-1/2 text-lg font-bold text-zen-sub">
-              ₽
-            </span>
-          </div>
+        <div className="flex-1">
+          <h3 className="font-display text-xl font-medium text-zen-text">{methodName}</h3>
+          <p className="text-sm text-zen-sub">
+            {formatRubles(minRubles)} – {formatRubles(maxRubles)} ₽
+          </p>
         </div>
-
-        {quickAmounts.length > 0 && (
-          <div className="flex gap-2 mb-5">
-            {quickAmounts.map((a) => {
-              const val = a.toString()
-              const isSelected = amount === val
-              return (
-                <button
-                  key={a}
-                  type="button"
-                  onClick={() => { setAmount(val); triggerHapticFeedback('light'); inputRef.current?.blur() }}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    isSelected
-                      ? 'bg-zen-accent/10 text-zen-accent ring-1 ring-zen-accent/30'
-                      : 'bg-zen-bg text-zen-sub hover:bg-zen-sub/10 border border-zen-sub/10'
-                  }`}
-                >
-                  {formatRubles(a)}
-                </button>
-              )
-            })}
-          </div>
-        )}
-
-        {error && (
-          <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 mb-4">
-            <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <span className="text-sm text-red-500">{error}</span>
-          </div>
-        )}
-
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={isPending || !amount || parseFloat(amount) <= 0}
-          className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all btn-press ${
-            isPending || !amount || parseFloat(amount) <= 0
-              ? 'bg-zen-sub/20 text-zen-sub cursor-not-allowed'
-              : isStarsMethod
-                ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg'
-                : 'bg-zen-text dark:bg-zen-accent text-white shadow-lg'
-          }`}
-        >
-          {isPending ? (
-            <>
-              <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              <span>{t('common.loading')}</span>
-            </>
-          ) : (
-            <>
-              <span>{t('balance.topUp', 'Top Up')}</span>
-              {displayAmount > 0 && (
-                <span className="opacity-90">
-                  {formatRubles(displayAmount)} ₽
-                </span>
-              )}
-            </>
-          )}
-        </button>
       </div>
-    </div>
-  )
 
-  if (typeof document !== 'undefined') {
-    return createPortal(content, document.body)
-  }
-  return content
+      {hasOptions && method.options && (
+        <div className="mb-5">
+          <label className="text-xs font-bold text-zen-sub uppercase tracking-widest mb-2 block">
+            {t('balance.paymentMethod', 'Payment option')}
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            {method.options.map((opt) => (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => { setSelectedOption(opt.id); triggerHapticFeedback('light') }}
+                className={`relative py-3 px-4 rounded-xl text-sm font-bold transition-all ${
+                  selectedOption === opt.id
+                    ? 'bg-zen-accent/10 text-zen-accent ring-2 ring-zen-accent/30'
+                    : 'bg-zen-bg text-zen-sub hover:bg-zen-sub/10 border border-zen-sub/10'
+                }`}
+              >
+                {opt.name}
+                {selectedOption === opt.id && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-zen-accent" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-4">
+        <label className="text-xs font-bold text-zen-sub uppercase tracking-widest mb-2 block">
+          {t('balance.enterAmount', 'Amount')}
+        </label>
+        <div className={`relative rounded-2xl transition-all ${
+          isInputFocused
+            ? 'ring-2 ring-zen-accent/50 bg-zen-bg'
+            : 'bg-zen-bg border border-zen-sub/10'
+        }`}>
+          <input
+            ref={inputRef}
+            type="number"
+            inputMode="decimal"
+            enterKeyHint="done"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            onFocus={() => setIsInputFocused(true)}
+            onBlur={() => setIsInputFocused(false)}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSubmit() } }}
+            placeholder="0"
+            className="w-full h-14 px-5 pr-14 text-2xl font-bold bg-transparent text-zen-text placeholder:text-zen-sub/50 focus:outline-none"
+            autoComplete="off"
+          />
+          <span className="absolute right-5 top-1/2 -translate-y-1/2 text-lg font-bold text-zen-sub">
+            ₽
+          </span>
+        </div>
+      </div>
+
+      {quickAmounts.length > 0 && (
+        <div className="flex gap-2 mb-5">
+          {quickAmounts.map((a) => {
+            const val = a.toString()
+            const isSelected = amount === val
+            return (
+              <button
+                key={a}
+                type="button"
+                onClick={() => { setAmount(val); triggerHapticFeedback('light'); inputRef.current?.blur() }}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  isSelected
+                    ? 'bg-zen-accent/10 text-zen-accent ring-1 ring-zen-accent/30'
+                    : 'bg-zen-bg text-zen-sub hover:bg-zen-sub/10 border border-zen-sub/10'
+                }`}
+              >
+                {formatRubles(a)}
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {error && (
+        <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 mb-4">
+          <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm text-red-500">{error}</span>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={handleSubmit}
+        disabled={isPending || !amount || parseFloat(amount) <= 0}
+        className={`w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transition-all btn-press ${
+          isPending || !amount || parseFloat(amount) <= 0
+            ? 'bg-zen-sub/20 text-zen-sub cursor-not-allowed'
+            : isStarsMethod
+              ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg'
+              : 'bg-zen-text dark:bg-zen-accent text-white shadow-lg'
+        }`}
+      >
+        {isPending ? (
+          <>
+            <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            <span>{t('common.loading')}</span>
+          </>
+        ) : (
+          <>
+            <span>{t('balance.topUp', 'Top Up')}</span>
+            {displayAmount > 0 && (
+              <span className="opacity-90">
+                {formatRubles(displayAmount)} ₽
+              </span>
+            )}
+          </>
+        )}
+      </button>
+    </ZenModal>
+  )
 }

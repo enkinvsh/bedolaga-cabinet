@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import ConnectionModal from '../../components/ConnectionModal'
+import TrialActivationModal from '../../components/TrialActivationModal'
 import { subscriptionApi } from '../../api/subscription'
 import { wheelApi } from '../../api/wheel'
 import { contestsApi } from '../../api/contests'
@@ -37,11 +38,19 @@ export default function FlowTab() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const [showConnectionModal, setShowConnectionModal] = useState(false)
+  const [showTrialModal, setShowTrialModal] = useState(false)
 
   const { data: subscription } = useQuery({
     queryKey: ['user-subscription'],
     queryFn: subscriptionApi.getSubscription,
     staleTime: 60000,
+  })
+
+  const { data: trialInfo } = useQuery({
+    queryKey: ['trial-info'],
+    queryFn: subscriptionApi.getTrialInfo,
+    staleTime: 60000,
+    enabled: !subscription?.is_active,
   })
 
   const { data: wheelConfig } = useQuery({
@@ -66,6 +75,17 @@ export default function FlowTab() {
 
   const handleEnableClick = () => {
     triggerHapticFeedback('medium')
+    
+    if (!subscription?.is_active && trialInfo?.is_available) {
+      setShowTrialModal(true)
+      return
+    }
+    
+    setShowConnectionModal(true)
+  }
+
+  const handleTrialSuccess = () => {
+    setShowTrialModal(false)
     setShowConnectionModal(true)
   }
 
@@ -252,6 +272,14 @@ export default function FlowTab() {
 
       {showConnectionModal && (
         <ConnectionModal onClose={() => setShowConnectionModal(false)} />
+      )}
+
+      {showTrialModal && trialInfo && (
+        <TrialActivationModal 
+          trialInfo={trialInfo} 
+          onClose={() => setShowTrialModal(false)} 
+          onSuccess={handleTrialSuccess}
+        />
       )}
     </div>
   )
